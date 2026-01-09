@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<base href="{{ route('index') }}">
+		<!-- <base href="{{ route('index') }}"> -->
 
 		<!-- begin::GXON Meta Basic -->
 		<meta charset="utf-8">
