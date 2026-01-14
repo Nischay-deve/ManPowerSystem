@@ -41,9 +41,9 @@
 			{{ now()->format('D, M d, Y') }} - {{ now()->addMonth()->format('D, M d, Y') }}
 		</span>
 	</div>
-	<button type="button" class="btn btn-primary waves-effect waves-light" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+	<!-- <button type="button" class="btn btn-primary waves-effect waves-light" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
 		<i class="fi fi-rr-plus me-1"></i> Add Employee
-	</button>
+	</button> -->
 </div>
 
 <div class="row">
@@ -1295,7 +1295,7 @@
 		</div> -->
 </div>
 
-<div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-hidden="true">
+<!-- <div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered">
 		<div class="modal-content">
 			<div class="modal-header py-3">
@@ -1364,5 +1364,5 @@
 			</div>
 		</div>
 	</div>
-</div>
+</div> -->
 @endsection

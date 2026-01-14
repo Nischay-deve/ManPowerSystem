@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 	<!-- begin::GXON Meta Basic -->
 	<meta charset="utf-8">
@@ -52,12 +53,12 @@
 </head>
 
 <body>
-  <div class="page-layout">
+	<div class="page-layout">
 		@include('includes.header')
 		@include('includes.sidebar')
 
 		<main class="app-wrapper">
-			<div class="container">
+			<div class="container-fluid">
 				@yield('content')
 			</div>
 		</main>
@@ -66,4 +67,5 @@
 	</div>
 	@stack('scripts')
 </body>
+
 </html>

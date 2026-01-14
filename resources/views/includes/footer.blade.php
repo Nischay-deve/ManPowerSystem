@@ -2,22 +2,31 @@
 <footer class="footer-wrapper bg-body">
 	<div class="container">
 		<div class="row g-2">
+
+			{{-- LEFT --}}
 			<div class="col-lg-6 col-md-7 text-center text-md-start">
-				<p class="mb-0">© <span class="currentYear">2025</span> GXON. Proudly powered by <a href="javascript:void(0);">LayoutDrop</a>.</p>
+				<p class="mb-0">
+					© {{ now()->year }} GXON.
+					Proudly powered by
+					<a href="javascript:void(0);">LayoutDrop</a>.
+				</p>
 			</div>
+
+			{{-- RIGHT --}}
 			<div class="col-lg-6 col-md-5">
 				<ul class="d-flex list-inline mb-0 gap-3 flex-wrap justify-content-center justify-content-md-end">
 					<li>
 						<a class="text-body" href="{{ route('index') }}">Home</a>
 					</li>
 					<li>
-						<a class="text-body" href="{{ route('faq') }}">Faq's</a>
+						<a class="text-body" href="#">FAQs</a>
 					</li>
 					<li>
-						<a class="text-body" href="{{ route('faq') }}">Support</a>
+						<a class="text-body" href="#">Support</a>
 					</li>
 				</ul>
 			</div>
+
 		</div>
 	</div>
 </footer>

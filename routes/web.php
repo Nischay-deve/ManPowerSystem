@@ -1,114 +1,91 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\DesignationController;
+use App\Http\Controllers\Employee\EmployeeController;
 use App\Http\Controllers\GxonController;
+use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Default Route -> Login Page
-|--------------------------------------------------------------------------
-*/
+// ================= AUTH =================
 
-Route::get('/', [GxonController::class, 'loginBasic'])->name('login');
+// Login page
 
-/*
-|--------------------------------------------------------------------------
-| Dashboard Route (Index Page)
-|--------------------------------------------------------------------------
-*/
-Route::get('/dashboard', [GxonController::class, 'index'])->name('index');
+Route::get('/', function () {
+    return redirect()->route('login');
+});
+Route::get('/login', [GxonController::class, 'loginBasic'])
+    ->middleware('guest')
+    ->name('login');
 
-Route::get('employee', [GxonController::class, 'employee'])->name('employee');
-Route::get('attendance', [GxonController::class, 'attendance'])->name('attendance');
-Route::get('leave', [GxonController::class, 'leave'])->name('leave');
-Route::get('payroll', [GxonController::class, 'payroll'])->name('payroll');
-Route::get('recruitment', [GxonController::class, 'recruitment'])->name('recruitment');
-Route::get('task-management', [GxonController::class, 'taskManagement'])->name('task-management');
-Route::get('analytics', [GxonController::class, 'analytics'])->name('analytics');
-Route::get('chat', [GxonController::class, 'chat'])->name('chat');
-Route::get('profile', [GxonController::class, 'profile'])->name('profile');
-Route::get('calendar', [GxonController::class, 'calendar'])->name('calendar');
-Route::get('inbox', [GxonController::class, 'emailInbox'])->name('inbox');
-Route::get('compose', [GxonController::class, 'emailCompose'])->name('compose');
-Route::get('read-email', [GxonController::class, 'readEmail'])->name('read-email');
-Route::get('pricing', [GxonController::class, 'pricing'])->name('pricing');
-Route::get('faqs', [GxonController::class, 'faqs'])->name('faq');
-Route::get('coming-soon', [GxonController::class, 'comingSoon'])->name('coming-soon');
-Route::get('blog-grid', [GxonController::class, 'blogGrid'])->name('blog');
-Route::get('blog-list', [GxonController::class, 'blogList'])->name('blog-list');
-Route::get('blog-details', [GxonController::class, 'blogDetails'])->name('blog-details');
-Route::get('error-basic', [GxonController::class, 'errorBasic'])->name('error-404');
-Route::get('error-cover', [GxonController::class, 'errorCover'])->name('error-404-cover');
-Route::get('error-full', [GxonController::class, 'errorFull'])->name('error-404-full');
-Route::get('construction-basic', [GxonController::class, 'constructionBasic'])->name('under-construction');
-Route::get('construction-cover', [GxonController::class, 'constructionCover'])->name('under-construction-cover');
-Route::get('construction-full', [GxonController::class, 'constructionFull'])->name('under-construction-full');
+// Login submit
+Route::post('/login', [AuthController::class, 'login'])
+    ->middleware('guest')
+    ->name('login.submit');
 
-Route::get('login-basic', [GxonController::class, 'loginBasic'])->name('login-basic');
-Route::get('login-cover', [GxonController::class, 'loginCover'])->name('login-cover');
-Route::get('login-frame', [GxonController::class, 'loginFrame'])->name('login-frame');
+// Logout
+Route::post('/logout', [AuthController::class, 'logout'])
+    ->middleware('auth')
+    ->name('logout');
 
-Route::get('register-basic', [GxonController::class, 'registerBasic'])->name('register-basic');
-Route::get('register-cover', [GxonController::class, 'registerCover'])->name('register-cover');
-Route::get('register-frame', [GxonController::class, 'registerFrame'])->name('register-frame');
+// Register page
+Route::get('/register-basic', [GxonController::class, 'registerBasic'])
+    ->middleware('guest')
+    ->name('register-basic');
 
-Route::get('forgot-password-basic', [GxonController::class, 'forgotPasswordBasic'])->name('forgot-password-basic');
-Route::get('forgot-password-cover', [GxonController::class, 'forgotPasswordCover'])->name('forgot-password-cover');
-Route::get('forgot-password-frame', [GxonController::class, 'forgotPasswordFrame'])->name('forgot-password-frame');
+Route::middleware('auth')->group(function () {
+    Route::get('/employees', [EmployeeController::class, 'index'])
+        ->name('employees.index');
 
-Route::get('new-password-basic', [GxonController::class, 'newPasswordBasic'])->name('new-password-basic');
-Route::get('new-password-cover', [GxonController::class, 'newPasswordCover'])->name('new-password-cover');
-Route::get('new-password-frame', [GxonController::class, 'newPasswordFrame'])->name('new-password-frame');
+    Route::get('/employees/create', [EmployeeController::class, 'create'])
+        ->name('employees.create');
 
-Route::get('accordion', [GxonController::class, 'uiAccordion'])->name('accordion');
-Route::get('alerts', [GxonController::class, 'uiAlerts'])->name('alerts');
-Route::get('badge', [GxonController::class, 'uiBadge'])->name('badge');
-Route::get('breadcrumb', [GxonController::class, 'uiBreadcrumb'])->name('breadcrumb');
-Route::get('buttons', [GxonController::class, 'uiButtons'])->name('buttons');
-Route::get('typography', [GxonController::class, 'uiTypography'])->name('typography');
-Route::get('button-group', [GxonController::class, 'uiButtonGroup'])->name('button-group');
-Route::get('card', [GxonController::class, 'uiCard'])->name('card');
-Route::get('collapse', [GxonController::class, 'uiCollapse'])->name('collapse');
-Route::get('carousel', [GxonController::class, 'uiCarousel'])->name('carousel');
-Route::get('dropdowns', [GxonController::class, 'uiDropdowns'])->name('dropdowns');
-Route::get('modal', [GxonController::class, 'uiModal'])->name('modal');
-Route::get('navbar', [GxonController::class, 'uiNavbar'])->name('navbar');
-Route::get('list-group', [GxonController::class, 'uiListGroup'])->name('list-group');
-Route::get('tabs', [GxonController::class, 'uiTabs'])->name('tabs');
-Route::get('offcanvas', [GxonController::class, 'uiOffcanvas'])->name('offcanvas');
-Route::get('pagination', [GxonController::class, 'uiPagination'])->name('pagination');
-Route::get('popovers', [GxonController::class, 'uiPopovers'])->name('popovers');
-Route::get('progress', [GxonController::class, 'uiProgress'])->name('progress');
-Route::get('scrollspy', [GxonController::class, 'uiScrollspy'])->name('scrollspy');
-Route::get('spinners', [GxonController::class, 'uiSpinners'])->name('spinners');
-Route::get('toasts', [GxonController::class, 'uiToasts'])->name('toasts');
-Route::get('tooltips', [GxonController::class, 'uiTooltips'])->name('tooltips');
+    Route::post('/employees', [EmployeeController::class, 'store'])
+        ->name('employees.store');
 
-Route::get('avatar', [GxonController::class, 'avatar'])->name('avatar');
-Route::get('card-action', [GxonController::class, 'cardAction'])->name('card-action');
-Route::get('drag-drop', [GxonController::class, 'dragDrop'])->name('drag-drop');
-Route::get('simplebar', [GxonController::class, 'simplebar'])->name('simplebar');
-Route::get('swiper', [GxonController::class, 'swiper'])->name('swiper');
-Route::get('team', [GxonController::class, 'team'])->name('team');
+    Route::get('/employees/{employee}/edit', [EmployeeController::class, 'edit'])
+        ->name('employees.edit');
 
-Route::get('flaticon', [GxonController::class, 'flaticon'])->name('flaticon');
-Route::get('lucide', [GxonController::class, 'lucide'])->name('lucide');
-Route::get('fontawesome', [GxonController::class, 'fontawesome'])->name('fontawesome');
+    Route::put('/employees/{employee}', [EmployeeController::class, 'update'])
+        ->name('employees.update');
 
-Route::get('form-elements', [GxonController::class, 'formElements'])->name('form-elements');
-Route::get('form-floating', [GxonController::class, 'formFloating'])->name('form-floating');
-Route::get('form-input-group', [GxonController::class, 'formInputGroup'])->name('form-input-group');
-Route::get('form-layout', [GxonController::class, 'formLayout'])->name('form-layout');
-Route::get('form-validation', [GxonController::class, 'formValidation'])->name('form-validation');
-Route::get('flatpickr', [GxonController::class, 'flatpickr'])->name('flatpickr');
-Route::get('tagify', [GxonController::class, 'tagify'])->name('tagify');
+    Route::delete('/employees/{employee}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
+});
 
-Route::get('table', [GxonController::class, 'table'])->name('table');
-Route::get('datatable', [GxonController::class, 'datatable'])->name('datatable');
 
-Route::get('apex-chart', [GxonController::class, 'apexChart'])->name('apex-chart');
-Route::get('chart-js', [GxonController::class, 'chartJs'])->name('chart-js');
-Route::get('vector-map', [GxonController::class, 'vectorMap'])->name('jsvectormap');
-Route::get('leaflet', [GxonController::class, 'leaflet'])->name('leaflet');
+Route::middleware('guest')->group(function () {
 
-Route::post('/login', [GxonController::class, 'doLogin'])->name('login.submit');
+    Route::get('/forgot-password', [AuthController::class, 'forgotPassword'])
+        ->name('forgot-password-basic');
+
+    Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])
+        ->name('forgot-password.submit');
+});
+
+// Register submit
+Route::post('/register', [AuthController::class, 'register'])
+    ->middleware('guest')
+    ->name('register.submit');
+
+Route::middleware('auth')->group(function () {
+
+    Route::get('/dashboard', [GxonController::class, 'index'])->name('index');
+
+    // Route::get('employee', [GxonController::class, 'employee'])->name('employee');
+    Route::get('attendance', [GxonController::class, 'attendance'])->name('attendance');
+    Route::get('leave', [GxonController::class, 'leave'])->name('leave');
+    Route::get('payroll', [GxonController::class, 'payroll'])->name('payroll');
+    Route::get('recruitment', [GxonController::class, 'recruitment'])->name('recruitment');
+    Route::get('task-management', [GxonController::class, 'taskManagement'])->name('task-management');
+    Route::get('analytics', [GxonController::class, 'analytics'])->name('analytics');
+    Route::get('chat', [GxonController::class, 'chat'])->name('chat');
+    Route::get('profile', [GxonController::class, 'profile'])->name('profile');
+    Route::get('calendar', [GxonController::class, 'calendar'])->name('calendar');
+    Route::get('inbox', [GxonController::class, 'emailInbox'])->name('inbox');
+});
+
+
+Route::middleware('auth')->group(function () {
+    Route::resource('departments', DepartmentController::class);
+    Route::resource('designations', DesignationController::class);
+});
