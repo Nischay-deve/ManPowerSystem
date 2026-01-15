@@ -21,6 +21,7 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+
         // flatpickr
         if (window.flatpickr) {
             flatpickr(".flatpickr-date", {
@@ -28,7 +29,7 @@
             });
         }
 
-        // Tab wizard (Next/Prev)
+        // Tab wizard
         const tabButtons = Array.from(document.querySelectorAll('[data-step-btn]'));
         const prevBtn = document.getElementById('btnPrev');
         const nextBtn = document.getElementById('btnNext');
@@ -45,20 +46,10 @@
             const tab = new bootstrap.Tab(trigger);
             tab.show();
 
-            // Toggle footer buttons
-            if (index === 0) {
-                prevBtn.classList.add('d-none');
-            } else {
-                prevBtn.classList.remove('d-none');
-            }
-
-            if (index === tabButtons.length - 1) {
-                nextBtn.classList.add('d-none');
-                submitBtn.classList.remove('d-none');
-            } else {
-                nextBtn.classList.remove('d-none');
-                submitBtn.classList.add('d-none');
-            }
+            // Footer buttons
+            prevBtn.classList.toggle('d-none', index === 0);
+            nextBtn.classList.toggle('d-none', index === tabButtons.length - 1);
+            submitBtn.classList.toggle('d-none', index !== tabButtons.length - 1);
         }
 
         prevBtn.addEventListener('click', function(e) {
@@ -71,7 +62,7 @@
             activateStep(getActiveIndex() + 1);
         });
 
-        // Prevent accidental submit on Enter (common reason for "auto save")
+        // Prevent accidental submit on Enter
         const form = document.getElementById('employeeForm');
         form.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
@@ -79,7 +70,7 @@
             }
         });
 
-        // Init state
+        // Init
         activateStep(getActiveIndex());
 
         // Photo preview
@@ -89,8 +80,18 @@
             photoInput.addEventListener('change', function() {
                 const file = this.files?.[0];
                 if (!file) return;
-                const url = URL.createObjectURL(file);
-                photoPreview.src = url;
+                photoPreview.src = URL.createObjectURL(file);
+            });
+        }
+
+        // Signature preview
+        const signInput = document.getElementById('signatureInput');
+        const signPreview = document.getElementById('signaturePreview');
+        if (signInput && signPreview) {
+            signInput.addEventListener('change', function() {
+                const file = this.files?.[0];
+                if (!file) return;
+                signPreview.src = URL.createObjectURL(file);
             });
         }
     });
@@ -130,6 +131,16 @@
     </div>
     @endif
 
+    @php
+    $photoUrl = !empty($employee->photo)
+    ? asset('storage/'.$employee->photo)
+    : asset('assets/images/avatar/avatar-large3.jpg');
+
+    $signatureUrl = !empty($employee->specimen_signature)
+    ? asset('storage/'.$employee->specimen_signature)
+    : asset('assets/images/avatar/avatar-large3.jpg');
+    @endphp
+
     <form id="employeeForm"
         method="POST"
         action="{{ route('employees.update', $employee->id) }}"
@@ -154,12 +165,12 @@
                     </li>
                     <li class="nav-item">
                         <button type="button" class="nav-link" data-step-btn data-bs-toggle="tab" data-bs-target="#step3">
-                            Statutory
+                            Statutory + Bank
                         </button>
                     </li>
                     <li class="nav-item">
                         <button type="button" class="nav-link" data-step-btn data-bs-toggle="tab" data-bs-target="#step4">
-                            Address & Exit
+                            Address + Exit + Uploads
                         </button>
                     </li>
                 </ul>
@@ -170,18 +181,16 @@
                     <div class="tab-pane fade show active" id="step1">
                         <div class="row">
 
-                            {{-- EMPLOYEE CODE (DISABLED) --}}
                             <div class="col-md-4 mb-3">
-                                <label class="form-label fw-medium">Employee Code</label>
-                                <input type="text" class="form-control" value="{{ $employee->employee_code }}" disabled>
-                                {{-- If you want to submit it (not required), keep hidden --}}
-                                <input type="hidden" name="employee_code" value="{{ $employee->employee_code }}">
+                                <label class="form-label fw-medium">Employee Code *</label>
+                                <input name="employee_code" class="form-control"
+                                    value="{{ old('employee_code', $employee->employee_code) }}" required>
                             </div>
 
                             <div class="col-md-4 mb-3">
-                                <label class="form-label fw-medium">First Name *</label>
-                                <input name="first_name" class="form-control"
-                                    value="{{ old('first_name', $employee->first_name) }}" required>
+                                <label class="form-label fw-medium">Name *</label>
+                                <input name="name" class="form-control"
+                                    value="{{ old('name', $employee->name) }}" required>
                             </div>
 
                             <div class="col-md-4 mb-3">
@@ -194,14 +203,14 @@
                                 <label class="form-label fw-medium">Gender</label>
                                 <select name="gender" class="form-select">
                                     <option value="">Select</option>
-                                    <option value="Male" {{ old('gender', $employee->gender) == 'Male' ? 'selected' : '' }}>Male</option>
-                                    <option value="Female" {{ old('gender', $employee->gender) == 'Female' ? 'selected' : '' }}>Female</option>
-                                    <option value="Other" {{ old('gender', $employee->gender) == 'Other' ? 'selected' : '' }}>Other</option>
+                                    @foreach(['Male','Female','Other'] as $g)
+                                    <option value="{{ $g }}" {{ old('gender', $employee->gender) == $g ? 'selected' : '' }}>{{ $g }}</option>
+                                    @endforeach
                                 </select>
                             </div>
 
                             <div class="col-md-4 mb-3">
-                                <label class="form-label fw-medium">Father / Spouse Name</label>
+                                <label class="form-label fw-medium">Father's / Spouse Name</label>
                                 <input name="father_or_spouse_name" class="form-control"
                                     value="{{ old('father_or_spouse_name', $employee->father_or_spouse_name) }}">
                             </div>
@@ -224,21 +233,6 @@
                                     value="{{ old('education_level', $employee->education_level) }}">
                             </div>
 
-                            {{-- PHOTO --}}
-                            @php
-                            $photoUrl = !empty($employee->photo)
-                            ? asset('storage/'.$employee->photo)
-                            : asset('assets/images/avatar/avatar-large3.jpg');
-                            @endphp
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-medium">Profile Photo</label>
-                                <input id="photoInput" type="file" name="photo" class="form-control" accept="image/*">
-                                <div class="mt-2">
-                                    <img id="photoPreview" src="{{ $photoUrl }}" alt="photo"
-                                        style="width: 72px; height: 72px; object-fit: cover; border-radius: 12px;">
-                                </div>
-                            </div>
-
                         </div>
                     </div>
 
@@ -253,33 +247,34 @@
                             </div>
 
                             <div class="col-md-4 mb-3">
-                                <label class="form-label fw-medium">Department ID</label>
-                                <input name="department_id" class="form-control"
-                                    value="{{ old('department_id', $employee->department_id) }}">
-                            </div>
+                                <label class="form-label">Designation</label>
+                                <select name="designation" class="form-select">
+                                    <option value="">Select Designation</option>
 
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-medium">Designation ID</label>
-                                <input name="designation_id" class="form-control"
-                                    value="{{ old('designation_id', $employee->designation_id) }}">
-                            </div>
-
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-medium">Employment Type *</label>
-                                <select name="employment_type" class="form-select" required>
-                                    @foreach(['Regular','Contract','Apprentice','Temporary'] as $type)
-                                    <option value="{{ $type }}"
-                                        {{ old('employment_type', $employee->employment_type) == $type ? 'selected' : '' }}>
-                                        {{ $type }}
+                                    @foreach($designations as $d)
+                                    <option value="{{ $d->id }}"
+                                        {{ old('designation') == $d->title ? 'selected' : '' }}>
+                                        {{ $d->title }}
                                     </option>
                                     @endforeach
                                 </select>
                             </div>
 
                             <div class="col-md-4 mb-3">
-                                <label class="form-label fw-medium">Category</label>
-                                <input name="category" class="form-control"
-                                    value="{{ old('category', $employee->category) }}">
+                                <label class="form-label fw-medium">Category Address (HS/S/SS/US)</label>
+                                <input name="category_address" class="form-control"
+                                    value="{{ old('category_address', $employee->category_address) }}" placeholder="HS / S / SS / US">
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-medium">Type of Employment *</label>
+                                <select name="employment_type" class="form-select" required>
+                                    @foreach(['Regular','Contract','Apprentice','Temporary'] as $type)
+                                    <option value="{{ $type }}" {{ old('employment_type', $employee->employment_type) == $type ? 'selected' : '' }}>
+                                        {{ $type }}
+                                    </option>
+                                    @endforeach
+                                </select>
                             </div>
 
                             <div class="col-md-4 mb-3">
@@ -289,21 +284,15 @@
                             </div>
 
                             <div class="col-md-4 mb-3">
-                                <label class="form-label fw-medium">Service Book No</label>
+                                <label class="form-label fw-medium">Service Book No.</label>
                                 <input name="service_book_no" class="form-control"
                                     value="{{ old('service_book_no', $employee->service_book_no) }}">
-                            </div>
-
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-medium">Address Type</label>
-                                <input name="address_type" class="form-control"
-                                    value="{{ old('address_type', $employee->address_type) }}">
                             </div>
 
                         </div>
                     </div>
 
-                    {{-- STEP 3 : STATUTORY --}}
+                    {{-- STEP 3 : STATUTORY + BANK --}}
                     <div class="tab-pane fade" id="step3">
                         <div class="row">
 
@@ -338,15 +327,35 @@
                             </div>
 
                             <div class="col-md-4 mb-3">
-                                <label class="form-label fw-medium">Aadhaar</label>
+                                <label class="form-label fw-medium">AADHAAR</label>
                                 <input name="aadhaar" class="form-control"
                                     value="{{ old('aadhaar', $employee->aadhaar) }}">
+                            </div>
+
+                            <hr class="my-2">
+
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-medium">Bank A/C No.</label>
+                                <input name="bank_account_no" class="form-control"
+                                    value="{{ old('bank_account_no', $employee->bank_account_no) }}">
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-medium">Bank</label>
+                                <input name="bank_name" class="form-control"
+                                    value="{{ old('bank_name', $employee->bank_name) }}">
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-medium">Branch (IFSC)</label>
+                                <input name="bank_ifsc" class="form-control"
+                                    value="{{ old('bank_ifsc', $employee->bank_ifsc) }}">
                             </div>
 
                         </div>
                     </div>
 
-                    {{-- STEP 4 : ADDRESS & EXIT --}}
+                    {{-- STEP 4 : ADDRESS + EXIT + UPLOADS --}}
                     <div class="tab-pane fade" id="step4">
                         <div class="row">
 
@@ -371,9 +380,8 @@
                                 <textarea name="remarks" class="form-control" rows="3">{{ old('remarks', $employee->remarks) }}</textarea>
                             </div>
 
-                            <hr class="my-3">
+                            <hr class="my-2">
 
-                            {{-- EXIT FLOW FIELDS --}}
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-medium">Date of Exit</label>
                                 <input name="date_of_exit" class="form-control flatpickr-date"
@@ -386,13 +394,33 @@
                                     value="{{ old('reason_for_exit', $employee->reason_for_exit) }}">
                             </div>
 
+                            <hr class="my-2">
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-medium">Photo</label>
+                                <input id="photoInput" type="file" name="photo" class="form-control" accept="image/*">
+                                <div class="mt-2">
+                                    <img id="photoPreview" src="{{ $photoUrl }}" alt="photo"
+                                        style="width:72px;height:72px;object-fit:cover;border-radius:12px;">
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-medium">Specimen Signature / Thumb Impression</label>
+                                <input id="signatureInput" type="file" name="specimen_signature" class="form-control" accept="image/*">
+                                <div class="mt-2">
+                                    <img id="signaturePreview" src="{{ $signatureUrl }}" alt="signature"
+                                        style="width:72px;height:72px;object-fit:cover;border-radius:12px;">
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
                 </div>
             </div>
 
-            {{-- FOOTER (NEXT/PREV/SUBMIT) --}}
+            {{-- FOOTER --}}
             <div class="card-footer d-flex justify-content-between px-4 py-3">
                 <a href="{{ route('employees.index') }}" class="btn btn-outline-secondary">
                     Cancel

@@ -34,22 +34,14 @@ Route::get('/register-basic', [GxonController::class, 'registerBasic'])
     ->name('register-basic');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/employees', [EmployeeController::class, 'index'])
-        ->name('employees.index');
+    Route::get('/employees', [\App\Http\Controllers\Employee\EmployeeController::class, 'index'])->name('employees.index');
+    Route::get('/employees/create', [\App\Http\Controllers\Employee\EmployeeController::class, 'create'])->name('employees.create');
+    Route::post('/employees', [\App\Http\Controllers\Employee\EmployeeController::class, 'store'])->name('employees.store');
 
-    Route::get('/employees/create', [EmployeeController::class, 'create'])
-        ->name('employees.create');
+    Route::get('/employees/{employee}/edit', [\App\Http\Controllers\Employee\EmployeeController::class, 'edit'])->name('employees.edit');
+    Route::put('/employees/{employee}', [\App\Http\Controllers\Employee\EmployeeController::class, 'update'])->name('employees.update');
 
-    Route::post('/employees', [EmployeeController::class, 'store'])
-        ->name('employees.store');
-
-    Route::get('/employees/{employee}/edit', [EmployeeController::class, 'edit'])
-        ->name('employees.edit');
-
-    Route::put('/employees/{employee}', [EmployeeController::class, 'update'])
-        ->name('employees.update');
-
-    Route::delete('/employees/{employee}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
+    Route::delete('/employees/{employee}', [\App\Http\Controllers\Employee\EmployeeController::class, 'destroy'])->name('employees.destroy');
 });
 
 
@@ -72,7 +64,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [GxonController::class, 'index'])->name('index');
 
     // Route::get('employee', [GxonController::class, 'employee'])->name('employee');
-    Route::get('attendance', [GxonController::class, 'attendance'])->name('attendance');
+    // Route::get('attendance', [GxonController::class, 'attendance'])->name('attendance');
     Route::get('leave', [GxonController::class, 'leave'])->name('leave');
     Route::get('payroll', [GxonController::class, 'payroll'])->name('payroll');
     Route::get('recruitment', [GxonController::class, 'recruitment'])->name('recruitment');
@@ -86,6 +78,6 @@ Route::middleware('auth')->group(function () {
 
 
 Route::middleware('auth')->group(function () {
-    Route::resource('departments', DepartmentController::class);
+    // Route::resource('departments', DepartmentController::class);
     Route::resource('designations', DesignationController::class);
 });

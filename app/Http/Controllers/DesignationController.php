@@ -7,35 +7,27 @@ use Illuminate\Http\Request;
 
 class DesignationController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $q = $request->get('q');
-
         $designations = Designation::query()
-            ->when($q, fn($query) => $query->where('name', 'like', "%{$q}%")
-                ->orWhere('code', 'like', "%{$q}%"))
+            ->withCount('employees') // employees_count
             ->latest()
-            ->paginate(12)
-            ->withQueryString();
+            ->get();
 
-        return view('designations.index', compact('designations', 'q'));
-    }
+        $total    = Designation::count();
+        $active   = Designation::where('is_active', 1)->count();
+        $inactive = Designation::where('is_active', 0)->count();
 
-    public function create()
-    {
-        return view('designations.create');
+        return view('designations.index', compact('designations', 'total', 'active', 'inactive'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'        => 'required|string|max:150|unique:designations,name',
-            'code'        => 'nullable|string|max:50|unique:designations,code',
-            'description' => 'nullable|string',
-            'is_active'   => 'nullable|boolean',
+            'title'     => 'required|string|max:150|unique:designations,title',
+            'is_active' => 'required|in:0,1',
+            'notes'     => 'nullable|string',
         ]);
-
-        $validated['is_active'] = $request->boolean('is_active');
 
         Designation::create($validated);
 
@@ -44,21 +36,13 @@ class DesignationController extends Controller
             ->with('success', 'Designation created successfully.');
     }
 
-    public function edit(Designation $designation)
-    {
-        return view('designations.edit', compact('designation'));
-    }
-
     public function update(Request $request, Designation $designation)
     {
         $validated = $request->validate([
-            'name'        => 'required|string|max:150|unique:designations,name,' . $designation->id,
-            'code'        => 'nullable|string|max:50|unique:designations,code,' . $designation->id,
-            'description' => 'nullable|string',
-            'is_active'   => 'nullable|boolean',
+            'title'     => 'required|string|max:150|unique:designations,title,' . $designation->id,
+            'is_active' => 'required|in:0,1',
+            'notes'     => 'nullable|string',
         ]);
-
-        $validated['is_active'] = $request->boolean('is_active');
 
         $designation->update($validated);
 
@@ -69,7 +53,7 @@ class DesignationController extends Controller
 
     public function destroy(Designation $designation)
     {
-        $designation->delete(); // ✅ soft delete
+        $designation->delete();
 
         return redirect()
             ->route('designations.index')

@@ -8,6 +8,7 @@
 
 	<nav class="app-navbar" data-simplebar>
 		<ul class="menubar">
+
 			<li class="menu-item">
 				<a class="menu-link {{ request()->routeIs('index') ? 'active' : '' }}"
 					href="{{ route('index') }}">
@@ -16,20 +17,23 @@
 			</li>
 
 			<li class="menu-item">
-				<a class="menu-link {{ request()->routeIs('employees*') ? 'active' : '' }}"
+				<a class="menu-link {{ request()->routeIs('employees.*') ? 'active' : '' }}"
 					href="{{ route('employees.index') }}">
 					Employee
 				</a>
 			</li>
 
-			<li class="menu-item">
-				<a class="menu-link" href="{{ route('attendance') }}">Departments</a>
-			</li>
+
 
 			<li class="menu-item">
-				<a class="menu-link" href="{{ route('leave') }}">Designations</a>
+				<a class="menu-link {{ request()->routeIs('designations.*') ? 'active' : '' }}"
+					href="{{ route('designations.index') }}">
+					Designations
+				</a>
 			</li>
+
 			<li class="menu-item {{ request()->routeIs('analytics') ? 'active' : '' }}"> <a class="menu-link" href="{{ route('analytics') }}"> <span class="menu-label">Analytics</span> </a> </li>
+
 		</ul>
 	</nav>
 

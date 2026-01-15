@@ -71,7 +71,7 @@
 
 		<div class="vr"></div>
 
-		{{-- ✅ SEARCH (FIXED ROUTE) --}}
+		{{-- ✅ SEARCH (employees.index) --}}
 		<form class="d-flex align-items-center h-100 w-150px w-lg-300px position-relative"
 			action="{{ route('employees.index') }}" method="GET">
 			<button type="submit" class="btn btn-sm border-0 position-absolute start-0 ms-3 p-0">
@@ -91,7 +91,7 @@
 	@forelse($employees as $employee)
 
 	@php
-	$fullName = trim(($employee->first_name ?? '').' '.($employee->surname ?? ''));
+	$fullName = trim(($employee->name ?? '').' '.($employee->surname ?? ''));
 
 	$statusBadge = 'bg-success-subtle text-success';
 	$statusText = 'Active';
@@ -101,14 +101,17 @@
 	$statusText = 'Exited';
 	}
 
-	// ✅ PHOTO (works if stored in storage/app/public)
 	$photoUrl = !empty($employee->photo)
 	? asset('storage/'.$employee->photo)
 	: asset('assets/images/avatar/avatar-large3.jpg');
 
-	$hired = $employee->date_of_joining
+	$hired = !empty($employee->date_of_joining)
 	? \Carbon\Carbon::parse($employee->date_of_joining)->format('d M Y')
 	: '-';
+
+	    $designation = $employee->designation?->title ?? '—';
+
+
 	@endphp
 
 	<div class="col-xxl-3 col-lg-4 col-md-6 mb-4">
@@ -154,9 +157,7 @@
 					</div>
 
 					<h5 class="mb-0 fw-bold">{{ $fullName ?: '-' }}</h5>
-					<p class="text-primary mb-0">
-						{{ $employee->designation_id ? 'Designation #'.$employee->designation_id : '—' }}
-					</p>
+					<p class="text-primary mb-0">{{ $designation }}</p>
 				</div>
 
 				<div class="p-3 bg-light rounded">
@@ -175,8 +176,8 @@
 
 					<div class="d-grid gap-2">
 						<span class="d-block text-dark">
-							<i class="fi fi-rr-building me-2 text-primary"></i>
-							{{ $employee->department_id ? 'Department #'.$employee->department_id : '—' }}
+							<i class="fi fi-rr-id-badge me-2 text-primary"></i>
+							{{ $employee->category ?? '—' }}
 						</span>
 
 						<span class="d-block text-dark">
