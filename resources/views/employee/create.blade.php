@@ -222,7 +222,7 @@
                             {{-- Designation (string) --}}
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Designation</label>
-                                <select name="designation" class="form-select">
+                                <select name="designation_id" class="form-select">
                                     <option value="">Select Designation</option>
 
                                     @foreach($designations as $d)

@@ -128,12 +128,14 @@ class EmployeeController extends Controller
             ->orderBy('title')
             ->get(['id', 'title']);
 
-        return view('employees.edit', compact('employee', 'designations'));
+        return view('employee.edit', compact('employee', 'designations'));
     }
 
 
     public function update(Request $request, Employee $employee)
     {
+
+        // dd($request);
         $validated = $request->validate([
             // unique ignore current row
             'employee_code' => 'required|string|max:100|unique:employees,employee_code,' . $employee->id,
