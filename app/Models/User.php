@@ -3,30 +3,37 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    protected $table = 'users';
 
     protected $fillable = [
-        'name',
+        'role_id',
+        'username',
         'email',
-        'password',
-        'role',
+        'full_name',
+        'password_hash',
         'is_active',
+        'last_login',
+        'password_reset_token',
+        'password_reset_expires',
+        'mfa_enabled',
+        'mfa_secret',
+        'created_by',
+        'role',
         'last_login_at'
     ];
 
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    protected $hidden = ['password_hash', 'mfa_secret'];
 
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'last_login_at'     => 'datetime',
-        'is_active'         => 'boolean',
-    ];
+    public function getAuthPassword()
+    {
+        return $this->password_hash;
+    }
+
+    public function roleRel()
+    {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
 }

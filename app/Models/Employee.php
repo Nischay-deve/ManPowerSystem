@@ -9,9 +9,12 @@ class Employee extends Model
 {
     use SoftDeletes;
 
+    protected $table = 'employees';
+
     protected $fillable = [
+        'sl_no',
         'employee_code',
-        'name',
+        'first_name',
         'surname',
         'gender',
         'father_or_spouse_name',
@@ -29,27 +32,49 @@ class Employee extends Model
         'esic_ip',
         'lwf',
         'aadhaar',
-        'bank_account_no',
-        'bank_name',
-        'bank_ifsc',
         'present_address',
         'permanent_address',
         'service_book_no',
         'date_of_exit',
         'reason_for_exit',
         'mark_of_identification',
-        'photo',
-        'specimen_signature',
         'remarks',
         'salary',
+        'row_version',
+        'created_by',
+        'updated_by',
+        'department_id'
     ];
+
+    protected $casts = [
+        'date_of_birth' => 'date',
+        'date_of_joining' => 'date',
+        'date_of_exit' => 'date',
+        'salary' => 'decimal:2',
+    ];
+
+    public function documents()
+    {
+        return $this->hasMany(EmployeeDocument::class, 'employee_id');
+    }
+
+    public function bankAccounts()
+    {
+        return $this->hasMany(EmployeeBankAccount::class, 'employee_id');
+    }
+
+    public function primaryBankAccount()
+    {
+        return $this->hasOne(EmployeeBankAccount::class, 'employee_id')->where('is_primary', 1);
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'department_id');
+    }
 
     public function designation()
     {
-        return $this->belongsTo(
-            \App\Models\Designation::class,
-            'designation_id',
-            'id'
-        );
+        return $this->belongsTo(Designation::class, 'designation_id');
     }
 }

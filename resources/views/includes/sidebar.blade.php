@@ -23,6 +23,20 @@
 				</a>
 			</li>
 
+			<li class="menu-item">
+				<a class="menu-link {{ request()->routeIs('bank.*') ? 'active' : '' }}"
+					href="{{ route('bank.index') }}">
+					Bank Accounts
+				</a>
+			</li>
+
+			<li class="menu-item">
+				<a class="menu-link {{ request()->routeIs('documents.*') ? 'active' : '' }}"
+					href="{{ route('documents.index') }}">
+					Documents
+				</a>
+			</li>
+
 
 
 			<li class="menu-item">

@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuthAudit;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 
 class GxonController extends Controller
@@ -18,7 +21,30 @@ class GxonController extends Controller
 
     public function doLogin(Request $request)
     {
-        // for now just redirect to dashboard
+        $request->validate([
+            'username' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        $ok = Auth::attempt([
+            'username'  => $request->username,
+            'password'  => $request->password,
+            'is_active' => 1,
+        ]);
+
+        AuthAudit::create([
+            'user_id'    => $ok ? Auth::id() : null,
+            'event_type' => $ok ? 'login_success' : 'login_failed',
+            'ip_address' => $request->ip(),
+            'user_agent' => substr((string)$request->userAgent(), 0, 1024),
+        ]);
+
+        if (!$ok) {
+            throw ValidationException::withMessages([
+                'username' => 'Invalid credentials.',
+            ]);
+        }
+
         return redirect()->route('index');
     }
     public function employee()
@@ -429,5 +455,21 @@ class GxonController extends Controller
     public function leaflet()
     {
         return view('maps.leaflet');
+    }
+
+    public function logout(Request $request)
+    {
+        \App\Models\AuthAudit::create([
+            'user_id'    => auth()->id(),
+            'event_type' => 'logout',
+            'ip_address' => $request->ip(),
+            'user_agent' => substr((string)$request->userAgent(), 0, 1024),
+        ]);
+
+        \Illuminate\Support\Facades\Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login.basic');
     }
 }

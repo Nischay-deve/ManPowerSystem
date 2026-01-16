@@ -1,9 +1,13 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Bank\BankAccountController;
+
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\Employee\EmployeeController;
+use App\Http\Controllers\EmployeeController as ControllersEmployeeController;
 use App\Http\Controllers\GxonController;
 use Illuminate\Support\Facades\Route;
 
@@ -34,15 +38,18 @@ Route::get('/register-basic', [GxonController::class, 'registerBasic'])
     ->name('register-basic');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/employees', [\App\Http\Controllers\Employee\EmployeeController::class, 'index'])->name('employees.index');
-    Route::get('/employees/create', [\App\Http\Controllers\Employee\EmployeeController::class, 'create'])->name('employees.create');
-    Route::post('/employees', [\App\Http\Controllers\Employee\EmployeeController::class, 'store'])->name('employees.store');
 
-    Route::get('/employees/{employee}/edit', [\App\Http\Controllers\Employee\EmployeeController::class, 'edit'])->name('employees.edit');
-    Route::put('/employees/{employee}', [\App\Http\Controllers\Employee\EmployeeController::class, 'update'])->name('employees.update');
+    Route::get('/employees', [ControllersEmployeeController::class, 'index'])->name('employees.index');
 
-    Route::delete('/employees/{employee}', [\App\Http\Controllers\Employee\EmployeeController::class, 'destroy'])->name('employees.destroy');
+    Route::get('/employees/create', [ControllersEmployeeController::class, 'create'])->name('employees.create');
+    Route::post('/employees', [ControllersEmployeeController::class, 'store'])->name('employees.store');
+
+    Route::get('/employees/{employee}/edit', [ControllersEmployeeController::class, 'edit'])->name('employees.edit');
+    Route::put('/employees/{employee}', [ControllersEmployeeController::class, 'update'])->name('employees.update');
+
+    Route::delete('/employees/{employee}', [ControllersEmployeeController::class, 'destroy'])->name('employees.destroy');
 });
+
 
 
 Route::middleware('guest')->group(function () {
@@ -61,7 +68,7 @@ Route::post('/register', [AuthController::class, 'register'])
 
 Route::middleware('auth')->group(function () {
 
-    Route::get('/dashboard', [GxonController::class, 'index'])->name('index');
+    // Route::get('/dashboard', [GxonController::class, 'index'])->name('index');
 
     // Route::get('employee', [GxonController::class, 'employee'])->name('employee');
     // Route::get('attendance', [GxonController::class, 'attendance'])->name('attendance');
@@ -80,4 +87,33 @@ Route::middleware('auth')->group(function () {
 Route::middleware('auth')->group(function () {
     // Route::resource('departments', DepartmentController::class);
     Route::resource('designations', DesignationController::class);
+});
+
+
+Route::middleware('auth')->group(function () {
+    Route::get('/bank-accounts', [BankAccountController::class, 'index'])->name('bank.index');
+    Route::get('/bank-accounts/create', [BankAccountController::class, 'create'])->name('bank.create');
+    Route::post('/bank-accounts', [BankAccountController::class, 'store'])->name('bank.store');
+
+    Route::get('/bank-accounts/{bank}/edit', [BankAccountController::class, 'edit'])->name('bank.edit');
+    Route::put('/bank-accounts/{bank}', [BankAccountController::class, 'update'])->name('bank.update');
+
+    Route::delete('/bank-accounts/{bank}', [BankAccountController::class, 'destroy'])->name('bank.destroy');
+});
+
+
+Route::middleware('auth')->group(function () {
+    Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
+    Route::get('/documents/create', [DocumentController::class, 'create'])->name('documents.create');
+    Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
+
+    Route::patch('/documents/{document}/deactivate', [DocumentController::class, 'deactivate'])->name('documents.deactivate');
+    Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
+});
+
+
+use App\Http\Controllers\DashboardController;
+
+Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('index');
 });

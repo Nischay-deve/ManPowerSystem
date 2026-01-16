@@ -6,19 +6,29 @@ use Illuminate\Database\Eloquent\Model;
 
 class Designation extends Model
 {
+    protected $table = 'designations';
+
     protected $fillable = [
+        'department_id',
         'title',
+        'code',
+        'grade',
+        'description',
         'is_active',
-        'notes',
+        'created_by'
     ];
 
-    // ✅ CORRECT
+    protected $casts = [
+        'is_active' => 'integer',
+    ];
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'department_id');
+    }
+
     public function employees()
     {
-        return $this->hasMany(
-            \App\Models\Employee::class,
-            'designation_id',
-            'id'
-        );
+        return $this->hasMany(Employee::class, 'designation_id');
     }
 }
