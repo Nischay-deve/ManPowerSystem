@@ -9,10 +9,11 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
+
     public function up(): void
     {
         Schema::table('employees', function (Blueprint $table) {
-            $table->renameColumn('designation', 'designation_id');
+            $table->unique('employee_code'); // adds unique index
         });
     }
 
@@ -21,9 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-
         Schema::table('employees', function (Blueprint $table) {
-            $table->renameColumn('designation_id', 'designation');
+            $table->dropUnique(['employee_code']);
         });
     }
 };

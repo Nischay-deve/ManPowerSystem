@@ -9,6 +9,7 @@ use App\Models\EmployeeBankAccount;
 use App\Models\EmployeeDocument;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class EmployeeController extends Controller
 {
@@ -46,25 +47,18 @@ class EmployeeController extends Controller
 
         return DB::transaction(function () use ($request, $data) {
 
-            // Auto generate employee_code like EMP-0007
-            $nextId = (Employee::max('id') ?? 0) + 1;
-            $employeeCode = 'EMP-' . str_pad((string)$nextId, 4, '0', STR_PAD_LEFT);
-
             $employee = Employee::create([
-                ...$data['employee'],
-                'employee_code' => $employeeCode,
-                'sl_no' => $data['employee']['sl_no'] ?? $nextId,
+                ...$data['employee'], // includes employee_code now
                 'created_by' => auth()->id(),
                 'row_version' => 1,
             ]);
 
-            // Bank (primary)
             if (!empty($data['bank']) && !empty($data['bank']['account_number'])) {
                 EmployeeBankAccount::where('employee_id', $employee->id)->update(['is_primary' => 0]);
 
                 EmployeeBankAccount::create([
                     'employee_id' => $employee->id,
-                    'account_number' => $data['bank']['account_number'], // model mutator will encrypt + last4
+                    'account_number' => $data['bank']['account_number'],
                     'account_holder_name' => $data['bank']['account_holder_name'] ?? null,
                     'bank_name' => $data['bank']['bank_name'] ?? null,
                     'branch' => $data['bank']['branch'] ?? null,
@@ -75,13 +69,15 @@ class EmployeeController extends Controller
                 ]);
             }
 
-            // Documents
             $this->saveDocuments($request, $employee->id);
 
             return redirect()->route('employees.edit', $employee->id)
                 ->with('success', 'Employee created successfully');
         });
     }
+
+
+
 
     public function edit($id)
     {
@@ -96,9 +92,20 @@ class EmployeeController extends Controller
     public function update(Request $request, $id)
     {
         $employee = Employee::findOrFail($id);
-        $data = $this->validateEmployee($request, true);
+
+        // ✅ If someone tries to change employee_code via Postman, block it
+        if ($request->filled('employee_code') && trim($request->employee_code) !== $employee->employee_code) {
+            return back()
+                ->withErrors(['employee_code' => 'Employee Code cannot be updated.'])
+                ->withInput();
+        }
+
+        $data = $this->validateEmployee($request, true, $employee->id);
 
         return DB::transaction(function () use ($request, $employee, $data) {
+
+            // ✅ Double-safety: remove employee_code from update payload
+            unset($data['employee']['employee_code']);
 
             $employee->update([
                 ...$data['employee'],
@@ -131,6 +138,7 @@ class EmployeeController extends Controller
         });
     }
 
+
     public function destroy($id)
     {
         $employee = Employee::findOrFail($id);
@@ -138,60 +146,84 @@ class EmployeeController extends Controller
         return redirect()->route('employees.index')->with('success', 'Employee deleted');
     }
 
-    private function validateEmployee(Request $request, bool $isUpdate = false): array
+    private function validateEmployee(Request $request, bool $isUpdate = false, ?int $employeeId = null): array
     {
-        $validated = $request->validate([
-            // employees
-            'first_name' => 'required|string|max:200',
-            'surname' => 'nullable|string|max:200',
-            'gender' => 'nullable|in:Male,Female,Other',
-            'father_or_spouse_name' => 'nullable|string|max:255',
-            'date_of_birth' => 'nullable|date',
-            'nationality' => 'nullable|string|max:100',
-            'education_level' => 'nullable|string|max:100',
-            'date_of_joining' => 'nullable|date',
-            'designation_id' => 'nullable|integer',
-            'department_id' => 'nullable|integer',
+        $rules = [
+            // Employee main fields
+            'first_name' => ['required', 'string', 'max:200'],
+            'surname' => ['nullable', 'string', 'max:200'],
+            'gender' => ['nullable', Rule::in(['Male', 'Female', 'Other'])],
+            'father_or_spouse_name' => ['nullable', 'string', 'max:255'],
+            'date_of_birth' => ['nullable', 'date'],
+            'nationality' => ['nullable', 'string', 'max:100'],
+            'education_level' => ['nullable', 'string', 'max:100'],
 
-            'category' => 'nullable|string|max:100',
-            'address_type' => 'nullable|string|max:20',
-            'employment_type' => 'required|in:Regular,Contract,Apprentice,Temporary',
+            'date_of_joining' => ['nullable', 'date'],
+            'designation_id' => ['nullable', 'integer'],
+            'department_id' => ['nullable', 'integer'],
 
-            'mobile' => 'nullable|string|max:30',
-            'uan' => 'nullable|string|max:50',
-            'pan' => 'nullable|string|max:20',
-            'esic_ip' => 'nullable|string|max:100',
-            'lwf' => 'nullable|string|max:100',
-            'aadhaar' => 'nullable|string|max:20',
+            'category' => ['nullable', 'string', 'max:100'],
+            'address_type' => ['nullable', 'string', 'max:20'],
+            'employment_type' => ['required', Rule::in(['Regular', 'Contract', 'Apprentice', 'Temporary'])],
 
-            'present_address' => 'nullable|string',
-            'permanent_address' => 'nullable|string',
+            'mobile' => ['nullable', 'string', 'max:30'],
+            'uan' => ['nullable', 'string', 'max:50'],
+            'pan' => ['nullable', 'string', 'max:20'],
+            'esic_ip' => ['nullable', 'string', 'max:100'],
+            'lwf' => ['nullable', 'string', 'max:100'],
+            'aadhaar' => ['nullable', 'string', 'max:20'],
 
-            'service_book_no' => 'nullable|string|max:100',
-            'date_of_exit' => 'nullable|date',
-            'reason_for_exit' => 'nullable|string|max:255',
+            'present_address' => ['nullable', 'string'],
+            'permanent_address' => ['nullable', 'string'],
 
-            'mark_of_identification' => 'nullable|string|max:255',
-            'remarks' => 'nullable|string',
-            'salary' => 'required|numeric|min:0',
+            'service_book_no' => ['nullable', 'string', 'max:100'],
+            'mark_of_identification' => ['nullable', 'string', 'max:255'],
 
-            // bank (NESTED)
-            'bank.account_number' => 'nullable|string|min:6|max:30',
-            'bank.account_holder_name' => 'nullable|string|max:255',
-            'bank.bank_name' => 'nullable|string|max:255',
-            'bank.branch' => 'nullable|string|max:255',
-            'bank.ifsc' => 'nullable|string|max:20',
+            'date_of_exit' => ['nullable', 'date'],
+            'reason_for_exit' => ['nullable', 'string', 'max:255'],
+            'remarks' => ['nullable', 'string'],
 
-            // documents
-            'photo' => 'nullable|file|mimes:jpg,jpeg,png,webp|max:2048',
-            'aadhaar_front' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:4096',
-            'aadhaar_back' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:4096',
-            'bank_proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:4096',
-            'signature' => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:4096',
-        ]);
+            'salary' => ['required', 'numeric', 'min:0'],
+
+            // Bank (nested)
+            'bank.account_number' => ['nullable', 'string', 'min:6', 'max:30'],
+            'bank.account_holder_name' => ['nullable', 'string', 'max:255'],
+            'bank.bank_name' => ['nullable', 'string', 'max:255'],
+            'bank.branch' => ['nullable', 'string', 'max:255'],
+            'bank.ifsc' => ['nullable', 'string', 'max:20'],
+
+            // Documents
+            'photo' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'aadhaar_front' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
+            'aadhaar_back' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
+            'bank_proof' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
+            'signature' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:4096'],
+        ];
+
+        // ✅ Employee Code logic:
+        // - Create: required + unique
+        // - Update: NOT required, and even if provided we will ignore in update controller
+        if (!$isUpdate) {
+            $rules['employee_code'] = [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('employees', 'employee_code'),
+            ];
+        } else {
+            $rules['employee_code'] = [
+                'nullable',
+                'string',
+                'max:50',
+            ];
+        }
+
+        $validated = $request->validate($rules);
 
         return [
-            'employee' => collect($validated)->except(['bank', 'photo', 'aadhaar_front', 'aadhaar_back', 'bank_proof', 'signature'])->toArray(),
+            'employee' => collect($validated)
+                ->except(['bank', 'photo', 'aadhaar_front', 'aadhaar_back', 'bank_proof', 'signature'])
+                ->toArray(),
             'bank' => $validated['bank'] ?? null,
         ];
     }

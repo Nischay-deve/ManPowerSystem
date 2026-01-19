@@ -118,11 +118,20 @@
                     <div class="tab-pane fade show active" id="step1" role="tabpanel">
                         <div class="row">
 
-                            {{-- Employee Code (Auto) --}}
+                            {{-- Employee Code (Manual + Unique + Required) --}}
                             <div class="col-md-4 mb-3">
-                                <label class="form-label">Employee Code</label>
-                                <input class="form-control" value="Auto Generated (EMP-0001...)" disabled>
-                                <small class="text-muted">System will create employee code automatically.</small>
+                                <label class="form-label">Employee Code <span class="text-danger">*</span></label>
+                                <input
+                                    name="employee_code"
+                                    class="form-control @error('employee_code') is-invalid @enderror"
+                                    value="{{ old('employee_code') }}"
+                                    required
+                                    autocomplete="off"
+                                    placeholder="Enter unique employee code (e.g., EMP-0001)">
+                                @error('employee_code')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <small class="text-muted">Must be unique and cannot be empty.</small>
                             </div>
 
                             <div class="col-md-4 mb-3">

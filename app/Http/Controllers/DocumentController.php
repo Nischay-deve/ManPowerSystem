@@ -6,6 +6,7 @@ use App\Models\Employee;
 use App\Models\EmployeeDocument;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class DocumentController extends Controller
@@ -13,8 +14,8 @@ class DocumentController extends Controller
     public function index(Request $request)
     {
         $q = trim((string) $request->get('q', ''));
-        $type = $request->get('type'); // photo/aadhaar/bank_proof/signature etc.
-        $active = $request->get('active'); // 1/0
+        $docType = $request->get('doc_type'); // ✅ matches blade name="doc_type"
+        $active = $request->get('active');    // 1/0
 
         $documents = EmployeeDocument::query()
             ->with(['employee.designation', 'employee.department'])
@@ -31,8 +32,8 @@ class DocumentController extends Controller
                         });
                 });
             })
-            ->when($type, fn($query) => $query->where('doc_type', $type))
-            ->when($active !== null && $active !== '', fn($query) => $query->where('is_active', (int)$active))
+            ->when($docType, fn($query) => $query->where('doc_type', $docType))
+            ->when($active !== null && $active !== '', fn($query) => $query->where('is_active', (int) $active))
             ->orderByDesc('id')
             ->paginate(20)
             ->withQueryString();
@@ -43,7 +44,7 @@ class DocumentController extends Controller
             ->orderBy('doc_type')
             ->pluck('doc_type');
 
-        return view('documents.index', compact('documents', 'q', 'type', 'active', 'types'));
+        return view('documents.index', compact('documents', 'q', 'docType', 'active', 'types'));
     }
 
     public function create(Request $request)
@@ -61,37 +62,52 @@ class DocumentController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'employee_id' => 'required|integer|exists:employees,id',
-            'doc_type' => 'required|string|max:50',
-            'remarks' => 'nullable|string|max:255',
-            'is_active' => 'nullable|boolean',
-            'file' => 'required|file|max:5120|mimes:jpg,jpeg,png,webp,pdf', // 5MB
+            'employee_id' => ['required', 'integer', 'exists:employees,id'],
+            'doc_type'    => ['required', 'string', 'max:50'],
+            'remarks'     => ['nullable', 'string', 'max:255'],
+            'is_active'   => ['nullable', 'boolean'],
+            'file'        => ['required', 'file', 'max:5120', 'mimes:jpg,jpeg,png,webp,pdf'], // 5MB
         ]);
 
         return DB::transaction(function () use ($request, $validated) {
 
-            $employeeId = (int)$validated['employee_id'];
+            $employeeId = (int) $validated['employee_id'];
 
             $file = $request->file('file');
-            $dir = "uploads/employees/{$employeeId}/docs";
-            $safeName = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
-            $fileName = ($validated['doc_type'] ?: 'doc') . "_" . time() . "_" . $safeName . "." . $file->getClientOriginalExtension();
 
+            $dir = "uploads/employees/{$employeeId}/docs";
+
+            $originalBase = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeBase = Str::slug($originalBase);
+            if ($safeBase === '') {
+                $safeBase = 'document';
+            }
+
+            $ext = strtolower($file->getClientOriginalExtension() ?: 'bin');
+
+            $fileName = ($validated['doc_type'] ?: 'doc')
+                . "_" . time()
+                . "_" . $safeBase
+                . "." . $ext;
+
+            // store in public disk -> storage/app/public/...
             $storedPath = $file->storeAs($dir, $fileName, 'public');
 
             EmployeeDocument::create([
-                'employee_id' => $employeeId,
-                'doc_type' => $validated['doc_type'],
-                'file_name' => $file->getClientOriginalName(),
-                'file_path' => $storedPath, // store path only, display with asset('storage/'.$file_path)
-                'file_size' => $file->getSize(),
-                'mime_type' => $file->getMimeType(),
-                'uploaded_by' => auth()->id(),
-                'remarks' => $validated['remarks'] ?? null,
-                'is_active' => (int)($validated['is_active'] ?? 1),
+                'employee_id'  => $employeeId,
+                'doc_type'     => $validated['doc_type'],
+                'file_name'    => $file->getClientOriginalName(),
+                'file_path'    => $storedPath, // IMPORTANT: store path only (no "storage/" prefix)
+                'file_size'    => $file->getSize(),
+                'mime_type'    => $file->getMimeType(),
+                'uploaded_by'  => auth()->id(),
+                'remarks'      => $validated['remarks'] ?? null,
+                'is_active'    => (int) ($validated['is_active'] ?? 1),
             ]);
 
-            return redirect()->route('documents.index')->with('success', 'Document uploaded successfully.');
+            return redirect()
+                ->route('documents.index')
+                ->with('success', 'Document uploaded successfully.');
         });
     }
 
@@ -103,23 +119,42 @@ class DocumentController extends Controller
     public function update(Request $request, EmployeeDocument $document)
     {
         $validated = $request->validate([
-            'doc_type' => 'required|string|max:50',
-            'remarks' => 'nullable|string|max:255',
-            'is_active' => 'required|in:0,1',
+            'doc_type'  => ['required', 'string', 'max:50'],
+            'remarks'   => ['nullable', 'string', 'max:255'],
+            'is_active' => ['required', 'in:0,1'],
         ]);
 
         $document->update([
-            'doc_type' => $validated['doc_type'],
-            'remarks' => $validated['remarks'] ?? null,
-            'is_active' => (int)$validated['is_active'],
+            'doc_type'  => $validated['doc_type'],
+            'remarks'   => $validated['remarks'] ?? null,
+            'is_active' => (int) $validated['is_active'],
         ]);
 
-        return redirect()->route('documents.index')->with('success', 'Document updated successfully.');
+        return redirect()
+            ->route('documents.index')
+            ->with('success', 'Document updated successfully.');
     }
 
     public function destroy(EmployeeDocument $document)
     {
+        // Optional: also delete the physical file
+        // if ($document->file_path && Storage::disk('public')->exists($document->file_path)) {
+        //     Storage::disk('public')->delete($document->file_path);
+        // }
+
         $document->delete(); // hard delete (table has no deleted_at)
-        return redirect()->route('documents.index')->with('success', 'Document deleted successfully.');
+
+        return redirect()
+            ->route('documents.index')
+            ->with('success', 'Document deleted successfully.');
+    }
+
+    public function deactivate(EmployeeDocument $document)
+    {
+        $document->update(['is_active' => 0]);
+
+        return redirect()
+            ->route('documents.index')
+            ->with('success', 'Document deactivated successfully.');
     }
 }
