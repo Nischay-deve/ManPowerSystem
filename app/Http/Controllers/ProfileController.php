@@ -2,75 +2,73 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Employee;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class ProfileController extends Controller
 {
-    public function index()
+    public function show(Request $request)
     {
-        $user = Auth::user();
+        $user = auth()->user();
 
-        $employee = null;
-
-        // ✅ Attach employee if employees table has user_id
-        if (Schema::hasTable('employees') && Schema::hasColumn('employees', 'user_id')) {
-            $employee = Employee::with(['designation', 'department', 'documents', 'primaryBankAccount'])
-                ->where('user_id', $user->id)
-                ->first();
+        // Users table only
+        $fullName = trim((string)($user->full_name ?? ''));
+        if ($fullName === '') {
+            $fullName = trim((string)($user->username ?? 'Profile'));
         }
 
-        // ✅ Dynamic Name
-        $fullName =
-            trim(($employee->first_name ?? '') . ' ' . ($employee->surname ?? ''))
-            ?: ($user->name ?? 'Profile');
-
-        // ✅ Dynamic Role (from users table if exists)
-        $role = $user->role ?? null; // if you don’t have role column, it will be null and Blade won’t show it
-
-        // ✅ Dynamic Status
-        $status = 'Active';
-        if ($employee && !empty($employee->date_of_exit)) {
-            $status = 'Exited';
-        }
-
-        // ✅ Designation
-        $designation = $employee?->designation?->title ?? null;
-
-        // ✅ Email / Phone
         $email = $user->email ?? null;
-        $phone = $employee->mobile ?? ($user->phone ?? null);
+        $username = $user->username ?? null;
 
-        // ✅ DOB / Join Date (only if exists)
-        $dob = $employee->date_of_birth ?? null;
-        $joinedDate = $employee->date_of_joining ?? null;
+        // status from is_active (if column exists)
+        $status = ((int)($user->is_active ?? 1) === 1) ? 'Active' : 'Inactive';
 
-        // ✅ Profile photo from employee_documents (optional)
-        $photoUrl = asset('assets/images/avatar/avatar-large3.jpg');
-        if ($employee && $employee->documents) {
-            $photoDoc = $employee->documents
-                ->where('is_active', 1)
-                ->firstWhere('remarks', 'Profile photo');
+        // last login (if column exists)
+        $lastLogin = $user->last_login_at ?? $user->last_login ?? null;
 
-            if ($photoDoc && !empty($photoDoc->file_path)) {
-                $photoUrl = asset('storage/' . $photoDoc->file_path);
-            }
+        // default avatar (users table has no image column)
+        $photoUrl = asset('assets/images/users/default-avatar.png');
+
+        return view('profile.show', compact(
+            'user',
+            'photoUrl',
+            'fullName',
+            'email',
+            'username',
+            'status',
+            'lastLogin'
+        ));
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $user = auth()->user();
+
+        $request->validate([
+            'current_password' => ['required', 'string'],
+            'new_password'     => ['required', 'string', 'min:8', 'confirmed'],
+        ], [
+            'new_password.confirmed' => 'New password and confirm password do not match.',
+        ]);
+
+        // Your users table uses password_hash
+        if (!Hash::check($request->current_password, (string)$user->password_hash)) {
+            return back()
+                ->withErrors(['current_password' => 'Current password is incorrect.'])
+                ->withInput();
         }
 
-        return view('profile.index', compact(
-            'user',
-            'employee',
-            'fullName',
-            'role',
-            'status',
-            'designation',
-            'email',
-            'phone',
-            'dob',
-            'joinedDate',
-            'photoUrl'
-        ));
+        // prevent same password
+        if (Hash::check($request->new_password, (string)$user->password_hash)) {
+            return back()
+                ->withErrors(['new_password' => 'New password cannot be same as current password.'])
+                ->withInput();
+        }
+
+        $user->update([
+            'password_hash' => Hash::make($request->new_password),
+        ]);
+
+        return back()->with('success', 'Password updated successfully.');
     }
 }

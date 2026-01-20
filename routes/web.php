@@ -78,7 +78,7 @@ Route::middleware('auth')->group(function () {
     Route::get('task-management', [GxonController::class, 'taskManagement'])->name('task-management');
     Route::get('analytics', [GxonController::class, 'analytics'])->name('analytics');
     Route::get('chat', [GxonController::class, 'chat'])->name('chat');
-    Route::get('profile', [GxonController::class, 'profile'])->name('profile');
+    // Route::get('profile', [GxonController::class, 'profile'])->name('profile');
     Route::get('calendar', [GxonController::class, 'calendar'])->name('calendar');
     Route::get('inbox', [GxonController::class, 'emailInbox'])->name('inbox');
 });
@@ -113,7 +113,17 @@ Route::middleware('auth')->group(function () {
 
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProfileController;
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('index');
 });
+
+// routes/web.php
+Route::get('/profile', [ProfileController::class, 'show'])
+    ->name('profile')
+    ->middleware('auth');
+
+Route::post('/profile/password', [ProfileController::class, 'updatePassword'])
+    ->name('profile.password.update')
+    ->middleware('auth');
