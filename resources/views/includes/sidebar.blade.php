@@ -12,49 +12,44 @@
 			<li class="menu-item">
 				<a class="menu-link {{ request()->routeIs('index') ? 'active' : '' }}"
 					href="{{ route('index') }}">
-					Dashboard
+					<i class="fi fi-rr-apps"></i>
+					<span class="menu-label">Dashboard</span>
 				</a>
 			</li>
 
 			<li class="menu-item">
 				<a class="menu-link {{ request()->routeIs('employees.*') ? 'active' : '' }}"
 					href="{{ route('employees.index') }}">
-					Employee
+					<i class="fi fi-rr-users"></i>
+					<span class="menu-label">Workforce</span>
 				</a>
 			</li>
-
-			<li class="menu-item">
-				<a class="menu-link {{ request()->routeIs('bank.*') ? 'active' : '' }}"
-					href="{{ route('bank.index') }}">
-					Bank Accounts
-				</a>
-			</li>
-
-			<li class="menu-item">
-				<a class="menu-link {{ request()->routeIs('documents.*') ? 'active' : '' }}"
-					href="{{ route('documents.index') }}">
-					Documents
-				</a>
-			</li>
-
-
 
 			<li class="menu-item">
 				<a class="menu-link {{ request()->routeIs('designations.*') ? 'active' : '' }}"
 					href="{{ route('designations.index') }}">
-					Designations
+					<i class="fi fi-rr-id-badge"></i>
+					<span class="menu-label">Designations</span>
 				</a>
 			</li>
 
-			<li class="menu-item {{ request()->routeIs('analytics') ? 'active' : '' }}"> <a class="menu-link" href="{{ route('analytics') }}"> <span class="menu-label">Analytics</span> </a> </li>
+			<li class="menu-item">
+				<a class="menu-link {{ request()->routeIs('departments.*') ? 'active' : '' }}"
+					href="{{ route('departments.index') }}">
+					<i class="fi fi-rr-building"></i>
+					<span class="menu-label">Departments</span>
+				</a>
+			</li>
 
 		</ul>
 	</nav>
+
 
 	<div class="app-footer">
 		<form method="POST" action="{{ route('logout') }}">
 			@csrf
 			<button class="btn btn-outline-light w-100">
+				<i class="fi fi-rr-sign-out-alt me-1"></i>
 				Logout
 			</button>
 		</form>

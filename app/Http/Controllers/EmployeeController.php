@@ -33,6 +33,7 @@ class EmployeeController extends Controller
         return view('employees.index', compact('employees', 'q'));
     }
 
+
     public function create()
     {
         $departments = Department::where('is_active', 1)->orderBy('name')->get();
@@ -43,16 +44,24 @@ class EmployeeController extends Controller
 
     public function store(Request $request)
     {
-        $data = $this->validateEmployee($request);
+        $data = $this->validateEmployee($request, false);
 
         return DB::transaction(function () use ($request, $data) {
 
+            // ✅ work_status (UI) -> is_active (DB)
+            $isActive = $this->workStatusToIsActive($data['employee']['work_status'] ?? null);
+
+            // work_status is not DB column
+            unset($data['employee']['work_status']);
+
             $employee = Employee::create([
-                ...$data['employee'], // includes employee_code now
-                'created_by' => auth()->id(),
+                ...$data['employee'],
+                'is_active'   => $isActive,
+                'created_by'  => auth()->id(),
                 'row_version' => 1,
             ]);
 
+            // ✅ Bank (Primary)
             if (!empty($data['bank']) && !empty($data['bank']['account_number'])) {
                 EmployeeBankAccount::where('employee_id', $employee->id)->update(['is_primary' => 0]);
 
@@ -69,15 +78,14 @@ class EmployeeController extends Controller
                 ]);
             }
 
+            // ✅ Documents
             $this->saveDocuments($request, $employee->id);
 
-            return redirect()->route('employees.edit', $employee->id)
+            return redirect()
+                ->route('employees.edit', $employee->id)
                 ->with('success', 'Employee created successfully');
         });
     }
-
-
-
 
     public function edit($id)
     {
@@ -93,7 +101,7 @@ class EmployeeController extends Controller
     {
         $employee = Employee::findOrFail($id);
 
-        // ✅ If someone tries to change employee_code via Postman, block it
+        // ✅ Block employee_code updates
         if ($request->filled('employee_code') && trim($request->employee_code) !== $employee->employee_code) {
             return back()
                 ->withErrors(['employee_code' => 'Employee Code cannot be updated.'])
@@ -104,16 +112,23 @@ class EmployeeController extends Controller
 
         return DB::transaction(function () use ($request, $employee, $data) {
 
-            // ✅ Double-safety: remove employee_code from update payload
+            // Safety: never update employee_code
             unset($data['employee']['employee_code']);
+
+            // ✅ If work_status present -> update is_active
+            if (array_key_exists('work_status', $data['employee'])) {
+                $employee->is_active = $this->workStatusToIsActive($data['employee']['work_status']);
+                unset($data['employee']['work_status']);
+            }
 
             $employee->update([
                 ...$data['employee'],
-                'updated_by' => auth()->id(),
+                'is_active'   => (int) $employee->is_active,
+                'updated_by'  => auth()->id(),
                 'row_version' => (int)($employee->row_version ?? 1) + 1,
             ]);
 
-            // Bank update (primary)
+            // ✅ Bank update (Primary)
             if (!empty($data['bank']) && !empty($data['bank']['account_number'])) {
                 EmployeeBankAccount::where('employee_id', $employee->id)->update(['is_primary' => 0]);
 
@@ -133,57 +148,73 @@ class EmployeeController extends Controller
 
             $this->saveDocuments($request, $employee->id);
 
-            return redirect()->route('employees.edit', $employee->id)
+            return redirect()
+                ->route('employees.edit', $employee->id)
                 ->with('success', 'Employee updated successfully');
         });
     }
 
-
     public function destroy($id)
     {
         $employee = Employee::findOrFail($id);
-        $employee->delete(); // soft delete (deleted_at)
+        $employee->delete(); // soft delete
         return redirect()->route('employees.index')->with('success', 'Employee deleted');
+    }
+
+    public function show(Employee $employee)
+    {
+        $employee->load(['designation', 'documents', 'primaryBankAccount', 'department']);
+
+        $photoDoc = $employee->documents
+            ->where('remarks', 'Profile photo')
+            ->where('is_active', 1)
+            ->first();
+
+        $photoUrl = $photoDoc
+            ? asset('storage/' . $photoDoc->file_path)
+            : asset('assets/images/users/default-avatar.png');
+
+        $status = ((int)$employee->is_active === 1) ? 'Active' : 'Inactive';
+        $fullName = trim(($employee->first_name ?? '') . ' ' . ($employee->surname ?? ''));
+
+        return view('employees.show', compact('employee', 'photoUrl', 'status', 'fullName'));
     }
 
     private function validateEmployee(Request $request, bool $isUpdate = false, ?int $employeeId = null): array
     {
         $rules = [
-            // Employee main fields
             'first_name' => ['required', 'string', 'max:200'],
             'surname' => ['nullable', 'string', 'max:200'],
             'gender' => ['nullable', Rule::in(['Male', 'Female', 'Other'])],
             'father_or_spouse_name' => ['nullable', 'string', 'max:255'],
             'date_of_birth' => ['nullable', 'date'],
-            'nationality' => ['nullable', 'string', 'max:100'],
-            'education_level' => ['nullable', 'string', 'max:100'],
+
+            'nationality' => ['nullable', Rule::in(['Indian', 'Non Indian'])],
 
             'date_of_joining' => ['nullable', 'date'],
             'designation_id' => ['nullable', 'integer'],
             'department_id' => ['nullable', 'integer'],
 
             'category' => ['nullable', 'string', 'max:100'],
-            'address_type' => ['nullable', 'string', 'max:20'],
-            'employment_type' => ['required', Rule::in(['Regular', 'Contract', 'Apprentice', 'Temporary'])],
 
             'mobile' => ['nullable', 'string', 'max:30'],
             'uan' => ['nullable', 'string', 'max:50'],
             'pan' => ['nullable', 'string', 'max:20'],
             'esic_ip' => ['nullable', 'string', 'max:100'],
-            'lwf' => ['nullable', 'string', 'max:100'],
             'aadhaar' => ['nullable', 'string', 'max:20'],
 
             'present_address' => ['nullable', 'string'],
             'permanent_address' => ['nullable', 'string'],
-
-            'service_book_no' => ['nullable', 'string', 'max:100'],
-            'mark_of_identification' => ['nullable', 'string', 'max:255'],
-
-            'date_of_exit' => ['nullable', 'date'],
-            'reason_for_exit' => ['nullable', 'string', 'max:255'],
             'remarks' => ['nullable', 'string'],
 
             'salary' => ['required', 'numeric', 'min:0'],
+
+            // ✅ Accept BOTH: strings OR 1/0
+            'work_status' => $isUpdate
+                ? ['nullable', Rule::in(['Active', 'On Leave', 'Exited', '0', '1', 0, 1])]
+                : ['required', Rule::in(['Active', 'On Leave', 'Exited', '0', '1', 0, 1])],
+
+            'employment_type' => ['required', Rule::in(['Regular', 'Contract', 'Apprentice', 'Temporary'])],
 
             // Bank (nested)
             'bank.account_number' => ['nullable', 'string', 'min:6', 'max:30'],
@@ -192,7 +223,7 @@ class EmployeeController extends Controller
             'bank.branch' => ['nullable', 'string', 'max:255'],
             'bank.ifsc' => ['nullable', 'string', 'max:20'],
 
-            // Documents
+            // Documents (optional)
             'photo' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'aadhaar_front' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
             'aadhaar_back' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
@@ -200,9 +231,6 @@ class EmployeeController extends Controller
             'signature' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:4096'],
         ];
 
-        // ✅ Employee Code logic:
-        // - Create: required + unique
-        // - Update: NOT required, and even if provided we will ignore in update controller
         if (!$isUpdate) {
             $rules['employee_code'] = [
                 'required',
@@ -211,11 +239,7 @@ class EmployeeController extends Controller
                 Rule::unique('employees', 'employee_code'),
             ];
         } else {
-            $rules['employee_code'] = [
-                'nullable',
-                'string',
-                'max:50',
-            ];
+            $rules['employee_code'] = ['nullable', 'string', 'max:50'];
         }
 
         $validated = $request->validate($rules);
@@ -228,9 +252,22 @@ class EmployeeController extends Controller
         ];
     }
 
+    /**
+     * ✅ Converts work_status (Active/On Leave/Exited OR 1/0) to is_active (1/0)
+     */
+    private function workStatusToIsActive($workStatus): int
+    {
+        // numeric
+        if ($workStatus === 1 || $workStatus === '1') return 1;
+        if ($workStatus === 0 || $workStatus === '0') return 0;
+
+        // string
+        $workStatus = (string) $workStatus;
+        return in_array($workStatus, ['Active', 'On Leave']) ? 1 : 0;
+    }
+
     private function saveDocuments(Request $request, int $employeeId): void
     {
-        // DB sample uses doc_type: photo, aadhaar, bank_proof (doc_type is varchar so signature is also OK)
         $map = [
             'photo' => ['doc_type' => 'photo', 'remarks' => 'Profile photo'],
             'aadhaar_front' => ['doc_type' => 'aadhaar', 'remarks' => 'Aadhaar front side'],
@@ -244,12 +281,10 @@ class EmployeeController extends Controller
 
             $file = $request->file($input);
 
-            // store in public disk -> storage/app/public/uploads/...
             $dir = "uploads/employees/{$employeeId}";
             $fileName = $meta['doc_type'] . "_" . time() . "." . $file->getClientOriginalExtension();
-            $storedPath = $file->storeAs($dir, $fileName, 'public'); // returns uploads/employees/{id}/x.ext
+            $storedPath = $file->storeAs($dir, $fileName, 'public');
 
-            // Deactivate old same doc slot (doc_type + remarks)
             EmployeeDocument::where('employee_id', $employeeId)
                 ->where('doc_type', $meta['doc_type'])
                 ->where('remarks', $meta['remarks'])
@@ -259,7 +294,7 @@ class EmployeeController extends Controller
                 'employee_id' => $employeeId,
                 'doc_type' => $meta['doc_type'],
                 'file_name' => $file->getClientOriginalName(),
-                'file_path' => $storedPath, // IMPORTANT: store WITHOUT 'storage/' prefix
+                'file_path' => $storedPath,
                 'file_size' => $file->getSize(),
                 'mime_type' => $file->getMimeType(),
                 'uploaded_by' => auth()->id(),

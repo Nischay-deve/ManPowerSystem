@@ -48,6 +48,8 @@ Route::middleware('auth')->group(function () {
     Route::put('/employees/{employee}', [ControllersEmployeeController::class, 'update'])->name('employees.update');
 
     Route::delete('/employees/{employee}', [ControllersEmployeeController::class, 'destroy'])->name('employees.destroy');
+    Route::get('/employees/{employee}', [ControllersEmployeeController::class, 'show'])
+        ->name('employees.show');
 });
 
 
@@ -127,3 +129,10 @@ Route::get('/profile', [ProfileController::class, 'show'])
 Route::post('/profile/password', [ProfileController::class, 'updatePassword'])
     ->name('profile.password.update')
     ->middleware('auth');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
+    Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
+    Route::put('/departments/{department}', [DepartmentController::class, 'update'])->name('departments.update');
+    Route::delete('/departments/{department}', [DepartmentController::class, 'destroy'])->name('departments.destroy');
+});

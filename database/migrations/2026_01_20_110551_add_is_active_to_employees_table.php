@@ -9,21 +9,19 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-
     public function up(): void
     {
         Schema::table('employees', function (Blueprint $table) {
-            $table->unique('employee_code'); // adds unique index
+            $table->boolean('is_active')
+                ->default(1)
+                ->after('deleted_at');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('employees', function (Blueprint $table) {
-            $table->dropUnique(['employee_code']);
+            $table->dropColumn('is_active');
         });
     }
 };

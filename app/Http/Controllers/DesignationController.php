@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Designation;
 use App\Models\Department;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class DesignationController extends Controller
 {
@@ -27,60 +28,161 @@ class DesignationController extends Controller
 
     public function store(Request $request)
     {
+        // ✅ Validate according to BLADE inputs (title, notes, code, status)
         $validated = $request->validate([
+            'title'   => 'required|string|max:200',
+            'notes'   => 'nullable|string|max:500',
+            'code'    => 'nullable|string|max:50',
+            'status'  => 'required|in:Active,Inactive',
+
+            // optional: if you add later (controller will only save if DB has column)
             'department_id' => 'nullable|integer|exists:departments,id',
-            'title'         => 'required|string|max:200',
-            'code'          => 'nullable|string|max:50',
             'grade'         => 'nullable|string|max:50',
-            'description'   => 'nullable|string|max:500',
-            'is_active'     => 'required|in:0,1',
         ]);
 
-        $validated['created_by'] = auth()->id();
+        $isActive = ($validated['status'] === 'Active') ? 1 : 0;
 
-        // Unique is (department_id, title)
-        $exists = Designation::where('department_id', $validated['department_id'])
-            ->where('title', $validated['title'])
-            ->exists();
-        if ($exists) {
-            return back()->withErrors(['title' => 'This designation already exists in selected department.'])->withInput();
+        // ✅ Build payload dynamically (only columns that exist in DB)
+        $payload = [];
+
+        if (Schema::hasColumn('designations', 'title')) {
+            $payload['title'] = $validated['title'];
         }
 
-        Designation::create($validated);
+        // Blade uses "notes". Some DBs have "notes", some have "description".
+        if (Schema::hasColumn('designations', 'notes')) {
+            $payload['notes'] = $validated['notes'] ?? null;
+        } elseif (Schema::hasColumn('designations', 'description')) {
+            $payload['description'] = $validated['notes'] ?? null;
+        }
 
-        return redirect()->route('designations.index')->with('success', 'Designation created successfully.');
+        if (Schema::hasColumn('designations', 'code')) {
+            $payload['code'] = $validated['code'] ?? null;
+        }
+
+        if (Schema::hasColumn('designations', 'grade')) {
+            $payload['grade'] = $validated['grade'] ?? null;
+        }
+
+        if (Schema::hasColumn('designations', 'department_id')) {
+            $payload['department_id'] = $validated['department_id'] ?? null;
+        }
+
+        if (Schema::hasColumn('designations', 'is_active')) {
+            $payload['is_active'] = $isActive;
+        }
+
+        if (Schema::hasColumn('designations', 'created_by')) {
+            $payload['created_by'] = auth()->id();
+        }
+
+        // ✅ Unique check aligned with DB + Blade
+        $query = Designation::query()->where('title', $validated['title']);
+
+        // if DB has department_id, do uniqueness per department (otherwise global)
+        if (Schema::hasColumn('designations', 'department_id')) {
+            $query->where('department_id', $validated['department_id'] ?? null);
+        }
+
+        if ($query->exists()) {
+            return back()
+                ->withErrors(['title' => 'This designation already exists.'])
+                ->withInput();
+        }
+
+        Designation::create($payload);
+
+        return redirect()
+            ->route('designations.index')
+            ->with('success', 'Designation created successfully.');
     }
 
     public function update(Request $request, Designation $designation)
     {
+        // ✅ Validate according to BLADE inputs
         $validated = $request->validate([
+            'title'   => 'required|string|max:200',
+            'notes'   => 'nullable|string|max:500',
+            'code'    => 'nullable|string|max:50',
+            'status'  => 'required|in:Active,Inactive',
+
+            // optional
             'department_id' => 'nullable|integer|exists:departments,id',
-            'title'         => 'required|string|max:200',
-            'code'          => 'nullable|string|max:50',
             'grade'         => 'nullable|string|max:50',
-            'description'   => 'nullable|string|max:500',
-            'is_active'     => 'required|in:0,1',
         ]);
 
-        $exists = Designation::where('department_id', $validated['department_id'])
-            ->where('title', $validated['title'])
-            ->where('id', '!=', $designation->id)
-            ->exists();
+        $isActive = ($validated['status'] === 'Active') ? 1 : 0;
 
-        if ($exists) {
-            return back()->withErrors(['title' => 'This designation already exists in selected department.'])->withInput();
+        $payload = [];
+
+        if (Schema::hasColumn('designations', 'title')) {
+            $payload['title'] = $validated['title'];
         }
 
-        $designation->update($validated);
+        if (Schema::hasColumn('designations', 'notes')) {
+            $payload['notes'] = $validated['notes'] ?? null;
+        } elseif (Schema::hasColumn('designations', 'description')) {
+            $payload['description'] = $validated['notes'] ?? null;
+        }
 
-        return redirect()->route('designations.index')->with('success', 'Designation updated successfully.');
+        if (Schema::hasColumn('designations', 'code')) {
+            $payload['code'] = $validated['code'] ?? null;
+        }
+
+        if (Schema::hasColumn('designations', 'grade')) {
+            $payload['grade'] = $validated['grade'] ?? null;
+        }
+
+        if (Schema::hasColumn('designations', 'department_id')) {
+            $payload['department_id'] = $validated['department_id'] ?? null;
+        }
+
+        if (Schema::hasColumn('designations', 'is_active')) {
+            $payload['is_active'] = $isActive;
+        }
+
+        if (Schema::hasColumn('designations', 'updated_by')) {
+            $payload['updated_by'] = auth()->id();
+        }
+
+        // ✅ Unique check
+        $query = Designation::query()
+            ->where('title', $validated['title'])
+            ->where('id', '!=', $designation->id);
+
+        if (Schema::hasColumn('designations', 'department_id')) {
+            $query->where('department_id', $validated['department_id'] ?? null);
+        }
+
+        if ($query->exists()) {
+            return back()
+                ->withErrors(['title' => 'This designation already exists.'])
+                ->withInput();
+        }
+
+        $designation->update($payload);
+
+        return redirect()
+            ->route('designations.index')
+            ->with('success', 'Designation updated successfully.');
     }
 
-    // Deactivate instead of hard delete (FK safe)
     public function destroy(Designation $designation)
     {
-        $designation->update(['is_active' => 0]);
+        $payload = [];
 
-        return redirect()->route('designations.index')->with('success', 'Designation deactivated successfully.');
+        if (Schema::hasColumn('designations', 'is_active')) {
+            $payload['is_active'] = 0;
+        }
+
+        if (Schema::hasColumn('designations', 'updated_by')) {
+            $payload['updated_by'] = auth()->id();
+        }
+
+        $designation->update($payload);
+
+        return redirect()
+            ->route('designations.index')
+            ->with('success', 'Designation deactivated successfully.');
     }
 }

@@ -4,72 +4,147 @@ namespace App\Http\Controllers;
 
 use App\Models\Department;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class DepartmentController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $q = $request->get('q');
-
-        $departments = Department::query()
-            ->when($q, fn($query) => $query
-                ->where('name', 'like', "%{$q}%")
-                ->orWhere('code', 'like', "%{$q}%"))
+        $departments = Department::query()  
             ->latest()
-            ->paginate(12)
-            ->withQueryString();
+            ->get();
 
-        return view('departments.index', compact('departments', 'q'));
-    }
+        $total    = Department::count();
+        $active   = Department::where('is_active', 1)->count();
+        $inactive = Department::where('is_active', 0)->count();
 
-    public function create()
-    {
-        return view('departments.create');
+        return view('departments.index', compact('departments', 'total', 'active', 'inactive'));
     }
 
     public function store(Request $request)
     {
+        // ✅ Validate according to Blade inputs (name, notes, code, status)
         $validated = $request->validate([
-            'name'        => 'required|string|max:150|unique:departments,name',
-            'code'        => 'nullable|string|max:50|unique:departments,code',
-            'description' => 'nullable|string|max:500',
-            'is_active'   => 'nullable|boolean',
+            'name'   => 'required|string|max:200',
+            'notes'  => 'nullable|string|max:500',
+            'code'   => 'nullable|string|max:50',
+            'status' => 'required|in:Active,Inactive',
         ]);
 
-        $validated['is_active']  = $request->boolean('is_active');
-        $validated['created_by'] = auth()->id();
+        $isActive = ($validated['status'] === 'Active') ? 1 : 0;
 
-        Department::create($validated);
+        // ✅ Build payload dynamically (save only if DB column exists)
+        $payload = [];
 
-        return redirect()->route('departments.index')->with('success', 'Department created successfully.');
-    }
+        if (Schema::hasColumn('departments', 'name')) {
+            $payload['name'] = $validated['name'];
+        }
 
-    public function edit(Department $department)
-    {
-        return view('departments.edit', compact('department'));
+        // Blade uses notes; DB can be notes or description
+        if (Schema::hasColumn('departments', 'notes')) {
+            $payload['notes'] = $validated['notes'] ?? null;
+        } elseif (Schema::hasColumn('departments', 'description')) {
+            $payload['description'] = $validated['notes'] ?? null;
+        }
+
+        if (Schema::hasColumn('departments', 'code')) {
+            $payload['code'] = $validated['code'] ?? null;
+        }
+
+        if (Schema::hasColumn('departments', 'is_active')) {
+            $payload['is_active'] = $isActive;
+        }
+
+        if (Schema::hasColumn('departments', 'created_by')) {
+            $payload['created_by'] = auth()->id();
+        }
+
+        // ✅ Unique check (name)
+        $existsQuery = Department::query()->where('name', $validated['name']);
+
+        if ($existsQuery->exists()) {
+            return back()
+                ->withErrors(['name' => 'This department already exists.'])
+                ->withInput();
+        }
+
+        Department::create($payload);
+
+        return redirect()
+            ->route('departments.index')
+            ->with('success', 'Department created successfully.');
     }
 
     public function update(Request $request, Department $department)
     {
         $validated = $request->validate([
-            'name'        => 'required|string|max:150|unique:departments,name,' . $department->id,
-            'code'        => 'nullable|string|max:50|unique:departments,code,' . $department->id,
-            'description' => 'nullable|string|max:500',
-            'is_active'   => 'nullable|boolean',
+            'name'   => 'required|string|max:200',
+            'notes'  => 'nullable|string|max:500',
+            'code'   => 'nullable|string|max:50',
+            'status' => 'required|in:Active,Inactive',
         ]);
 
-        $validated['is_active'] = $request->boolean('is_active');
+        $isActive = ($validated['status'] === 'Active') ? 1 : 0;
 
-        $department->update($validated);
+        $payload = [];
 
-        return redirect()->route('departments.index')->with('success', 'Department updated successfully.');
+        if (Schema::hasColumn('departments', 'name')) {
+            $payload['name'] = $validated['name'];
+        }
+
+        if (Schema::hasColumn('departments', 'notes')) {
+            $payload['notes'] = $validated['notes'] ?? null;
+        } elseif (Schema::hasColumn('departments', 'description')) {
+            $payload['description'] = $validated['notes'] ?? null;
+        }
+
+        if (Schema::hasColumn('departments', 'code')) {
+            $payload['code'] = $validated['code'] ?? null;
+        }
+
+        if (Schema::hasColumn('departments', 'is_active')) {
+            $payload['is_active'] = $isActive;
+        }
+
+        if (Schema::hasColumn('departments', 'updated_by')) {
+            $payload['updated_by'] = auth()->id();
+        }
+
+        // ✅ Unique check (name) excluding current
+        $existsQuery = Department::query()
+            ->where('name', $validated['name'])
+            ->where('id', '!=', $department->id);
+
+        if ($existsQuery->exists()) {
+            return back()
+                ->withErrors(['name' => 'This department already exists.'])
+                ->withInput();
+        }
+
+        $department->update($payload);
+
+        return redirect()
+            ->route('departments.index')
+            ->with('success', 'Department updated successfully.');
     }
 
-    // Instead of delete -> deactivate (FK safe)
+    // ✅ Deactivate instead of hard delete
     public function destroy(Department $department)
     {
-        $department->update(['is_active' => 0]);
+        $payload = [];
 
-        return redirect()->route('departments.index')->with('success', 'Department deactivated successfully.');
+        if (Schema::hasColumn('departments', 'is_active')) {
+            $payload['is_active'] = 0;
+        }
+
+        if (Schema::hasColumn('departments', 'updated_by')) {
+            $payload['updated_by'] = auth()->id();
+        }
+
+        $department->update($payload);
+
+        return redirect()
+            ->route('departments.index')
+            ->with('success', 'Department deactivated successfully.');
     }
 }

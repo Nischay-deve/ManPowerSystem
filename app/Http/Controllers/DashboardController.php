@@ -3,55 +3,56 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
-use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
         $today = Carbon::today();
 
-        // ✅ Workforce stats (dynamic)
-        $totalWorkforce  = Employee::count();
-        $joinedToday     = Employee::whereDate('date_of_joining', $today)->count();
-        $activeWorkforce = Employee::whereNull('date_of_exit')->count();
+        // Base query (ignore deleted records)
+        $base = Employee::query()->whereNull('deleted_at');
 
-        // Since no leave table exists, we will treat "Inactive" as employees having date_of_exit (or you can use soft-delete if your model supports it)
-        $inactiveWorkforce = Employee::whereNotNull('date_of_exit')->count();
+        // ✅ Cards
+        $totalEmployee = (clone $base)->count();
 
-        $exitedWorkforce = Employee::whereNotNull('date_of_exit')->count();
-        $exitedToday     = Employee::whereDate('date_of_exit', $today)->count();
+        // "New Employee" -> Joined Today (you can change to month if needed)
+        $newEmployee = (clone $base)
+            ->whereNotNull('date_of_joining')
+            ->whereDate('date_of_joining', $today)
+            ->count();
 
-        // ✅ Percentage placeholders (optional dynamic)
-        // Keeping 0 if you don’t have history tables.
-        $joinedChangePct = 0;
-        $activeChangePct = 0;
-        $exitedChangePct = 0;
+        /**
+         * Your DB has only `is_active` (0/1) + `date_of_exit`
+         * So we assume:
+         * Active  => is_active = 1 AND date_of_exit IS NULL
+         * OnLeave => is_active = 0 AND date_of_exit IS NULL
+         * Exited  => date_of_exit IS NOT NULL
+         */
+        $onLeave = (clone $base)
+            ->where('is_active', 0)
+            ->whereNull('date_of_exit')
+            ->count();
 
-        $stats = [
-            'totalWorkforce'     => $totalWorkforce,
-            'joinedToday'        => $joinedToday,
-            'activeWorkforce'    => $activeWorkforce,
-            'inactiveWorkforce'  => $inactiveWorkforce,
-            'exitedWorkforce'    => $exitedWorkforce,
-            'exitedToday'        => $exitedToday,
-            'joinedChangePct'    => $joinedChangePct,
-            'activeChangePct'    => $activeChangePct,
-            'exitedChangePct'    => $exitedChangePct,
-        ];
+        // Not available in your DB currently
+        $jobApplicants = 0;
+        $overTime = 0;
 
-        // ✅ Recent Job Application (No table provided, so using employees as dynamic demo)
-        $recentApplicants = Employee::with(['designation'])
-            ->orderByDesc('id')
-            ->limit(5)
+        // ✅ Recent Workforce table
+        $recentWorkforce = (clone $base)
+            ->with(['department', 'designation'])
+            ->latest('id')
+            ->take(20)
             ->get();
 
-        // ✅ Leave Table structure → show ALL employees (as requested)
-        $leaveEmployees = Employee::with(['designation'])
-            ->orderByDesc('id')
-            ->get();
-
-        return view('dashboard.index', compact('stats', 'recentApplicants', 'leaveEmployees'));
+        return view('dashboard.index', compact(
+            'totalEmployee',
+            'newEmployee',
+            'onLeave',
+            'jobApplicants',
+            'overTime',
+            'recentWorkforce'
+        ));
     }
 }
