@@ -1,37 +1,66 @@
 @extends('layouts.auth')
 
 @push('styles')
+<!-- begin::GXON Required Stylesheet -->
 <link rel="stylesheet" href="{{ asset('assets/libs/flaticon/css/all/all.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/libs/lucide/lucide.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/libs/fontawesome/css/all.min.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/libs/simplebar/simplebar.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/libs/node-waves/waves.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/libs/bootstrap-select/css/bootstrap-select.min.css') }}">
+<!-- end::GXON Required Stylesheet -->
+
+<!-- begin::GXON CSS Stylesheet -->
 <link rel="stylesheet" href="{{ asset('assets/css/styles.css') }}">
+<!-- end::GXON CSS Stylesheet -->
 @endpush
 
 @push('scripts')
+<!-- begin::GXON Page Scripts -->
 <script src="{{ asset('assets/libs/global/global.min.js') }}"></script>
 <script src="{{ asset('assets/js/appSettings.js') }}"></script>
 <script src="{{ asset('assets/js/main.js') }}"></script>
+<!-- end::GXON Page Scripts -->
 @endpush
 
 @section('content')
+<div class="auth-frame-wrapper">
+	<div class="row g-0 h-100">
+		{{-- LEFT SIDE FRAME --}}
+		<div class="col-lg-6 d-none d-lg-block">
+			<div class="auth-frame"
+				style="background-image: url('{{ asset('assets/images/auth/auth-frame.webp') }}');">
+				<div class="clearfix">
+					<div class="auth-content">
+						<h1 class="display-6 text-white fw-bold">Welcome Back!</h1>
+						<p class="text-white">
+							Our HR Management & Administration ensure your organization runs smoothly, focusing on people,
+							compliance, and efficiency to drive growth and employee satisfaction.
+						</p>
+					</div>
 
-<div class="auth-wrapper min-vh-100 px-2"
-	style="background-image: url({{ asset('assets/images/auth/auth.webp') }}); background-size: cover; background-position: center; background-repeat: no-repeat;">
-	<div class="row g-0 min-vh-100">
-		<div class="col-xl-5 col-lg-6 ms-auto px-sm-4 align-self-center py-4">
-			<div class="card card-body p-4 p-sm-5 maxw-450px m-auto rounded-4">
+					<div class="auth-imgs position-relative">
+						<img src="{{ asset('assets/images/auth/img1.png') }}" alt="" class="img-fluid">
+						<img src="{{ asset('assets/images/auth/img2.png') }}" alt=""
+							class="img-fluid position1 position-absolute">
+						<img src="{{ asset('assets/images/auth/img3.png') }}" alt=""
+							class="img-fluid position2 position-absolute">
+					</div>
+				</div>
+			</div>
+		</div>
 
+		{{-- RIGHT SIDE FORM --}}
+		<div class="col-lg-6 align-self-center">
+			<div class="p-4 p-sm-5 maxw-450px m-auto">
 				<div class="mb-4 text-center">
-					<a href="{{ route('index') }}">
-						<img class="visible-light" src="{{ asset('assets/images/logo-full.svg') }}">
-						<img class="visible-dark" src="{{ asset('assets/images/logo-full-white.svg') }}">
+					<a href="{{ route('index') }}" aria-label="GXON logo">
+						<img class="visible-light" src="{{ asset('assets/images/logo-full.svg') }}" alt="GXON logo">
+						<img class="visible-dark" src="{{ asset('assets/images/logo-full-white.svg') }}" alt="GXON logo">
 					</a>
 				</div>
 
-				<div class="text-center mb-4">
+				<div class="text-center mb-5">
 					<h5 class="mb-1">Welcome to GXON</h5>
 					<p>Sign in to access your secure admin dashboard.</p>
 				</div>
@@ -79,45 +108,43 @@
 									class="form-check-input"
 									type="checkbox"
 									id="rememberMe"
-									name="remember">
-								<label class="form-check-label" for="rememberMe">
-									Remember Me
-								</label>
+									name="remember"
+									{{ old('remember') ? 'checked' : '' }}>
+								<label class="form-check-label" for="rememberMe"> Remember Me </label>
 							</div>
-							<a href="{{ route('forgot-password-basic') }}">Forgot Password?</a>
+							<!-- <a href="{{ route('forgot-password-basic') }}">Forgot Password?</a> -->
 						</div>
 					</div>
 
 					{{-- SUBMIT --}}
 					<div class="mb-3">
-						<button type="submit"
-							class="btn btn-primary waves-effect waves-light w-100">
+						<button type="submit" class="btn btn-primary waves-effect waves-light w-100">
 							Login
 						</button>
 					</div>
 
-					<p class="mb-5 text-center">
+					<!-- <p class="mb-5 text-center">
 						Don’t have an account?
 						<a href="{{ route('register-basic') }}">Sign Up here</a>
-					</p>
+					</p> -->
 
-					<div class="border-bottom position-relative my-3 text-center">
+					<!-- <div class="border-bottom position-relative my-3 text-center">
 						<span class="px-3 position-absolute translate-middle top-50 start-50 bg-body">
 							Or Continue With
 						</span>
-					</div>
+					</div> -->
 
-					<div class="d-flex gap-2 justify-content-center mt-5">
-						<a href="javascript:void(0);" class="btn btn-icon btn-subtle-facebook rounded-circle">
+					<!-- <div class="d-flex gap-2 justify-content-center mt-5">
+						<a href="javascript:void(0);" class="btn btn-icon btn-subtle-facebook rounded-circle waves-effect waves-light">
 							<i class="fa-brands fa-facebook-f"></i>
 						</a>
-						<a href="javascript:void(0);" class="btn btn-icon btn-subtle-twitter rounded-circle">
+						<a href="javascript:void(0);" class="btn btn-icon btn-subtle-twitter rounded-circle waves-effect waves-light">
 							<i class="fa-brands fa-x-twitter"></i>
 						</a>
-						<a href="javascript:void(0);" class="btn btn-icon btn-subtle-github rounded-circle">
+						<a href="javascript:void(0);" class="btn btn-icon btn-subtle-github rounded-circle waves-effect waves-light">
 							<i class="fa-brands fa-github"></i>
 						</a>
-					</div>
+					</div> -->
 
 				</form>
 			</div>

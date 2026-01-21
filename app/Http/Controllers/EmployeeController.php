@@ -82,7 +82,7 @@ class EmployeeController extends Controller
             $this->saveDocuments($request, $employee->id);
 
             return redirect()
-                ->route('employees.edit', $employee->id)
+                ->route('employees.index', $employee->id)
                 ->with('success', 'Employee created successfully');
         });
     }
@@ -163,12 +163,19 @@ class EmployeeController extends Controller
 
     public function show(Employee $employee)
     {
-        $employee->load(['designation', 'documents', 'primaryBankAccount', 'department']);
+        $employee->load([
+            'designation',
+            'department',
+            'primaryBankAccount',
+            'documents' => fn($q) => $q->orderByDesc('id'),
+        ]);
 
+        // Latest active profile photo: accept both doc_type and remarks (for old data)
         $photoDoc = $employee->documents
-            ->where('remarks', 'Profile photo')
             ->where('is_active', 1)
-            ->first();
+            ->first(function ($d) {
+                return $d->doc_type === 'photo' || $d->remarks === 'Profile photo';
+            });
 
         $photoUrl = $photoDoc
             ? asset('storage/' . $photoDoc->file_path)
@@ -179,6 +186,7 @@ class EmployeeController extends Controller
 
         return view('employees.show', compact('employee', 'photoUrl', 'status', 'fullName'));
     }
+
 
     private function validateEmployee(Request $request, bool $isUpdate = false, ?int $employeeId = null): array
     {

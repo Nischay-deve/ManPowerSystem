@@ -14,8 +14,8 @@ class DocumentController extends Controller
     public function index(Request $request)
     {
         $q = trim((string) $request->get('q', ''));
-        $docType = $request->get('doc_type'); // ✅ matches blade name="doc_type"
-        $active = $request->get('active');    // 1/0
+        $docType = $request->get('doc_type');
+        $active = $request->get('active');
 
         $documents = EmployeeDocument::query()
             ->with(['employee.designation', 'employee.department'])
@@ -63,50 +63,65 @@ class DocumentController extends Controller
     {
         $validated = $request->validate([
             'employee_id' => ['required', 'integer', 'exists:employees,id'],
-            'doc_type'    => ['required', 'string', 'max:50'],
+            'doc_type'    => ['nullable', 'string', 'max:50'],
             'remarks'     => ['nullable', 'string', 'max:255'],
-            'is_active'   => ['nullable', 'boolean'],
-            'file'        => ['required', 'file', 'max:5120', 'mimes:jpg,jpeg,png,webp,pdf'], // 5MB
+            'is_active'   => ['nullable'],
+            'file'        => ['required', 'file', 'max:5120', 'mimes:jpg,jpeg,png,webp,pdf'],
         ]);
+
+        // ✅ Fix: enforce doc_type + remarks based on "type" query param
+        $type = $request->get('type');
+
+        $typeMap = [
+            'profile_photo' => ['doc_type' => 'photo',         'remarks' => 'Profile photo'],
+            'aadhaar_front' => ['doc_type' => 'aadhaar_front', 'remarks' => 'Aadhaar front side'],
+            'aadhaar_back'  => ['doc_type' => 'aadhaar_back',  'remarks' => 'Aadhaar back side'],
+            'bank_proof'    => ['doc_type' => 'bank_proof',    'remarks' => 'Bank proof'],
+            'signature'     => ['doc_type' => 'signature',     'remarks' => 'Specimen signature / Thumb impression'],
+        ];
+
+        if ($type && isset($typeMap[$type])) {
+            $validated['doc_type'] = $typeMap[$type]['doc_type'];
+            $validated['remarks']  = $typeMap[$type]['remarks'];
+        }
+
+        // Ensure doc_type exists (fallback)
+        $validated['doc_type'] = $validated['doc_type'] ?? 'other';
 
         return DB::transaction(function () use ($request, $validated) {
 
             $employeeId = (int) $validated['employee_id'];
-
             $file = $request->file('file');
 
             $dir = "uploads/employees/{$employeeId}/docs";
 
             $originalBase = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-            $safeBase = Str::slug($originalBase);
-            if ($safeBase === '') {
-                $safeBase = 'document';
-            }
+            $safeBase = Str::slug($originalBase) ?: 'document';
 
             $ext = strtolower($file->getClientOriginalExtension() ?: 'bin');
 
-            $fileName = ($validated['doc_type'] ?: 'doc')
-                . "_" . time()
-                . "_" . $safeBase
-                . "." . $ext;
+            $fileName = Str::slug($validated['doc_type'])
+                . '_' . time()
+                . '_' . $safeBase
+                . '.' . $ext;
 
-            // store in public disk -> storage/app/public/...
             $storedPath = $file->storeAs($dir, $fileName, 'public');
 
             EmployeeDocument::create([
-                'employee_id'  => $employeeId,
-                'doc_type'     => $validated['doc_type'],
-                'file_name'    => $file->getClientOriginalName(),
-                'file_path'    => $storedPath, // IMPORTANT: store path only (no "storage/" prefix)
-                'file_size'    => $file->getSize(),
-                'mime_type'    => $file->getMimeType(),
-                'uploaded_by'  => auth()->id(),
-                'remarks'      => $validated['remarks'] ?? null,
-                'is_active'    => (int) ($validated['is_active'] ?? 1),
+                'employee_id' => $employeeId,
+                'doc_type'    => $validated['doc_type'],
+                'file_name'   => $file->getClientOriginalName(),
+                'file_path'   => $storedPath,
+                'file_size'   => $file->getSize(),
+                'mime_type'   => $file->getMimeType(),
+                'uploaded_by' => auth()->id(),
+                'remarks'     => $validated['remarks'] ?? null,
+                'is_active'   => (int) $request->boolean('is_active', true),
+                'uploaded_at' => now(),
             ]);
 
             return redirect()
-                ->route('documents.index')
+                ->route('employees.show', $employeeId)
                 ->with('success', 'Document uploaded successfully.');
         });
     }
@@ -131,18 +146,18 @@ class DocumentController extends Controller
         ]);
 
         return redirect()
-            ->route('documents.index')
+            ->route('employees.show', $document->employee_id)
             ->with('success', 'Document updated successfully.');
     }
 
     public function destroy(EmployeeDocument $document)
     {
-        // Optional: also delete the physical file
+        // Optional: delete physical file
         // if ($document->file_path && Storage::disk('public')->exists($document->file_path)) {
         //     Storage::disk('public')->delete($document->file_path);
         // }
 
-        $document->delete(); // hard delete (table has no deleted_at)
+        $document->delete();
 
         return redirect()
             ->route('documents.index')

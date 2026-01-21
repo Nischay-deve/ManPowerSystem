@@ -26,12 +26,12 @@
 	<meta name="twitter:card" content="summary">
 	<meta name="twitter:url" content="{{ route('index') }}/laravel/demo/">
 	<meta name="twitter:creator" content="@layoutdrop">
-	<meta name="twitter:title" content="GXON | HR Management Laravel Admin Dashboard Template">
+	<meta name="twitter:title" content="WORKX">
 	<meta name="twitter:description" content="GXON is a professional and modern HR Management Laravel Admin Dashboard Template built with Bootstrap. It includes light and dark modes, and is ideal for managing employees, attendance, payroll, recruitment, and more — perfect for HR software and admin panels.">
 	<!-- end::GXON Meta Twitter -->
 
 	<!-- begin::GXON Website Page Title -->
-	<title>@yield('title', 'Man Power System')</title>
+	<title>@yield('title', 'WORKX')</title>
 	<!-- end::GXON Website Page Title -->
 
 	<!-- begin::GXON Mobile Specific -->
@@ -39,8 +39,8 @@
 	<!-- end::GXON Mobile Specific -->
 
 	<!-- begin::GXON Favicon Tags -->
-	<link rel="icon" type="image/png" href="{{ asset("assets/images/favicon.png") }}">
-	<link rel="apple-touch-icon" sizes="180x180" href="{{ asset("assets/images/apple-touch-icon.png") }}">
+	<link rel="icon" type="image/png" href="{{ asset("assets/images/auth/Xways_Icon.png") }}">
+	<link rel="apple-touch-icon" sizes="180x180" href="{{ asset("assets/images/auth/Xways_AppIcon_1024.png") }}">
 	<!-- end::GXON Favicon Tags -->
 
 	<!-- begin::GXON Google Fonts -->
@@ -58,7 +58,7 @@
 		@include('includes.sidebar')
 
 		<main class="app-wrapper">
-			<div class="container-fluid">
+			<div class="container">
 				@yield('content')
 			</div>
 		</main>

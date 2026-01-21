@@ -1,3 +1,4 @@
+{{-- resources/views/employees/show.blade.php --}}
 @extends('layouts.app')
 
 @push('styles')
@@ -10,7 +11,6 @@
 <link rel="stylesheet" href="{{ asset('assets/css/styles.css') }}">
 
 <style>
-    /* ✅ Compact cards (decrease tabs size) */
     .compact-card .card-header {
         padding: .65rem 1rem;
     }
@@ -37,6 +37,39 @@
 @endpush
 
 @section('content')
+
+@php
+// ✅ Only active docs (latest first)
+$docs = $employee->documents
+? $employee->documents->where('is_active', 1)->sortByDesc('id')->values()
+: collect();
+
+// ✅ Helper: match by doc_type OR remarks (supports old rows where remarks is NULL)
+$getDoc = function(array $docTypes = [], array $remarks = []) use ($docs) {
+return $docs->first(function($d) use ($docTypes, $remarks) {
+$byType = in_array((string)($d->doc_type ?? ''), $docTypes, true);
+$byRemark = !empty($d->remarks) && in_array((string)$d->remarks, $remarks, true);
+return $byType || $byRemark;
+});
+};
+
+// ✅ Photo: support both old + new mappings
+$photoDoc = $getDoc(['photo', 'profile_photo'], ['Profile photo']);
+$photoUrlLocal = $photoDoc ? asset('storage/'.$photoDoc->file_path) : asset('assets/images/avatar/avatar-large3.jpg');
+
+// If controller already sent $photoUrl, prefer it when available
+$photoUrl = isset($photoUrl) && $photoUrl ? $photoUrl : $photoUrlLocal;
+
+$fullName = trim(($employee->first_name ?? '').' '.($employee->surname ?? ''));
+
+// ✅ Date helper: use uploaded_at (your DB) OR created_at (if later you add timestamps)
+$docDate = function($doc) {
+if (!$doc) return null;
+if (!empty($doc->uploaded_at)) return \Carbon\Carbon::parse($doc->uploaded_at)->format('d M Y');
+if (!empty($doc->created_at)) return \Carbon\Carbon::parse($doc->created_at)->format('d M Y');
+return null;
+};
+@endphp
 
 {{-- PAGE HEADER --}}
 <div class="app-page-head d-flex flex-wrap gap-3 align-items-center justify-content-between">
@@ -67,9 +100,9 @@
                     <img src="{{ $photoUrl }}" alt="Employee Photo">
                 </div>
 
-                {{-- Show upload option if no profile photo --}}
-                @if(!$employee->documents->where('remarks', 'Profile photo')->count())
-                <a href="{{ route('documents.create', ['employee_id' => $employee->id, 'type' => 'profile']) }}"
+                {{-- If profile photo not uploaded --}}
+                @if(!$photoDoc)
+                <a href="{{ route('documents.create', ['employee_id' => $employee->id, 'type' => 'profile_photo']) }}"
                     class="btn btn-sm btn-outline-primary">
                     <i class="fi fi-rr-camera me-1"></i> Add Profile Photo
                 </a>
@@ -77,7 +110,7 @@
             </div>
 
             <div>
-                <h4 class="fw-bold mb-0">{{ $fullName }}</h4>
+                <h4 class="fw-bold mb-0">{{ $fullName ?: '-' }}</h4>
                 <small class="text-muted">
                     {{ $employee->designation?->title ?? '—' }}
                 </small>
@@ -110,7 +143,7 @@
             <div class="card-body">
                 <div class="kv">
                     <span>Full Name</span>
-                    <p>{{ $fullName }}</p>
+                    <p>{{ $fullName ?: '-' }}</p>
                 </div>
 
                 <div class="kv">
@@ -198,7 +231,7 @@
     {{-- RIGHT PANEL --}}
     <div class="col-lg-8">
 
-        {{-- EMPLOYMENT DETAILS (NO INPUTS) --}}
+        {{-- EMPLOYMENT DETAILS --}}
         <div class="card mb-3 compact-card">
             <div class="card-header">
                 <h4 class="card-title mb-0">Employment Details</h4>
@@ -249,16 +282,9 @@
                         </div>
                     </div>
 
-                    <div class="col-md-8">
-                        <div class="kv">
-                            <span>Reason For Exit</span>
-                            <p>{{ $employee->reason_for_exit ?? '-' }}</p>
-                        </div>
-                    </div>
-
                     <div class="col-md-4">
                         <div class="kv">
-                            <span>Work Status (DB: is_active)</span>
+                            <span>Work Status</span>
                             <p>{{ ((int)($employee->is_active ?? 0) === 1) ? 'Active' : 'Inactive' }}</p>
                         </div>
                     </div>
@@ -314,52 +340,156 @@
         </div>
 
         {{-- DOCUMENTS --}}
+        @php
+        // ✅ We match documents by doc_type first, and remarks as fallback (old data)
+        $requiredDocs = [
+        [
+        'label' => 'Profile Photo',
+        'docTypes'=> ['photo', 'profile_photo'],
+        'remarks' => ['Profile photo'],
+        'type' => 'profile_photo',
+        ],
+        [
+        'label' => 'Aadhaar Front',
+        'docTypes'=> ['aadhaar_front', 'aadhaar'],
+        'remarks' => ['Aadhaar front side'],
+        'type' => 'aadhaar_front',
+        ],
+        [
+        'label' => 'Aadhaar Back',
+        'docTypes'=> ['aadhaar_back', 'aadhaar'],
+        'remarks' => ['Aadhaar back side'],
+        'type' => 'aadhaar_back',
+        ],
+        [
+        'label' => 'Bank Proof',
+        'docTypes'=> ['bank_proof'],
+        'remarks' => ['Bank proof'],
+        'type' => 'bank_proof',
+        ],
+        [
+        'label' => 'Signature / Thumb',
+        'docTypes'=> ['signature'],
+        'remarks' => ['Specimen signature / Thumb impression'],
+        'type' => 'signature',
+        ],
+        ];
+        @endphp
+
         <div class="card compact-card">
             <div class="card-header">
                 <h4 class="card-title mb-0">Documents</h4>
             </div>
 
             <div class="card-body p-0">
-                @if($employee->documents->count())
                 <table class="table table-bordered mb-0">
                     <thead>
                         <tr>
                             <th>Document</th>
-                            <th>Uploaded</th>
-                            <th width="120">Action</th>
+                            <th width="170">Status</th>
+                            <th width="220">Action</th>
                         </tr>
                     </thead>
+
                     <tbody>
-                        @foreach($employee->documents as $doc)
+                        @foreach($requiredDocs as $item)
+                        @php
+                        $doc = $getDoc($item['docTypes'], $item['remarks']);
+                        $isUploaded = (bool) $doc;
+                        $uploadedAt = $docDate($doc);
+                        @endphp
+
                         <tr>
-                            <td>{{ $doc->remarks ?? 'Document' }}</td>
-                            <td>{{ $doc->created_at ? $doc->created_at->format('d M Y') : '-' }}</td>
                             <td>
+                                <div class="fw-semibold">{{ $item['label'] }}</div>
+                                <small class="text-muted">{{ $item['remarks'][0] ?? '' }}</small>
+                            </td>
+
+                            <td>
+                                @if($isUploaded)
+                                <span class="badge bg-success-subtle text-success">Uploaded</span>
+                                <div class="small text-muted mt-1">{{ $uploadedAt ?: '-' }}</div>
+                                @else
+                                <span class="badge bg-danger-subtle text-danger">Not Uploaded</span>
+                                @endif
+                            </td>
+
+                            <td>
+                                @if($isUploaded)
+                                <a target="_blank" href="{{ asset('storage/'.$doc->file_path) }}"
+                                    class="btn btn-sm btn-outline-primary me-1">
+                                    View
+                                </a>
+
                                 <a href="{{ asset('storage/'.$doc->file_path) }}"
-                                    class="btn btn-sm btn-primary"
-                                    download>
+                                    class="btn btn-sm btn-primary" download>
+                                    Download
+                                </a>
+                                @else
+                                <a href="{{ route('documents.create', ['employee_id' => $employee->id, 'type' => $item['type']]) }}"
+                                    class="btn btn-sm btn-success">
+                                    <i class="fi fi-rr-upload me-1"></i> Upload
+                                </a>
+                                @endif
+                            </td>
+                        </tr>
+                        @endforeach
+
+                        {{-- ✅ Show extra uploaded docs not part of required list (exclude by doc_type OR remarks) --}}
+                        @php
+                        $requiredDocTypes = collect($requiredDocs)->pluck('docTypes')->flatten()->unique()->values()->toArray();
+                        $requiredRemarks = collect($requiredDocs)->pluck('remarks')->flatten()->unique()->values()->toArray();
+
+                        $extraDocs = $docs->filter(function($d) use ($requiredDocTypes, $requiredRemarks) {
+                        $byType = in_array((string)($d->doc_type ?? ''), $requiredDocTypes, true);
+                        $byRemark = !empty($d->remarks) && in_array((string)$d->remarks, $requiredRemarks, true);
+                        return !$byType && !$byRemark;
+                        });
+                        @endphp
+
+                        @if($extraDocs->count())
+                        <tr class="table-light">
+                            <td colspan="3" class="fw-bold">Other Uploaded Documents</td>
+                        </tr>
+
+                        @foreach($extraDocs as $doc)
+                        <tr>
+                            <td>{{ $doc->remarks ?? ($doc->doc_type ?? 'Document') }}</td>
+                            <td>
+                                <span class="badge bg-success-subtle text-success">Uploaded</span>
+                                <div class="small text-muted mt-1">
+                                    {{ $docDate($doc) ?: '-' }}
+                                </div>
+                            </td>
+                            <td>
+                                <a target="_blank" href="{{ asset('storage/'.$doc->file_path) }}"
+                                    class="btn btn-sm btn-outline-primary me-1">
+                                    View
+                                </a>
+                                <a href="{{ asset('storage/'.$doc->file_path) }}"
+                                    class="btn btn-sm btn-primary" download>
                                     Download
                                 </a>
                             </td>
                         </tr>
                         @endforeach
+                        @endif
+
                     </tbody>
                 </table>
-                @else
-                <div class="p-4 text-center">
-                    <i class="fi fi-rr-folder-open fs-2 text-muted mb-2"></i>
-                    <p class="mb-2 text-muted">No documents uploaded yet.</p>
 
+                {{-- Optional button (kept commented like your original)
+                <div class="p-3 text-end">
                     <a href="{{ route('documents.create', ['employee_id' => $employee->id]) }}"
-                        class="btn btn-primary btn-sm">
-                        <i class="fi fi-rr-upload me-1"></i> Upload Document
-                    </a>
-                </div>
-                @endif
+                class="btn btn-sm btn-outline-secondary">
+                <i class="fi fi-rr-plus me-1"></i> Upload Other Document
+                </a>
             </div>
+            --}}
         </div>
-
     </div>
+
+</div>
 </div>
 
 @endsection

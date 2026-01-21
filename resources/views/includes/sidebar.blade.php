@@ -1,8 +1,20 @@
 <aside class="app-menubar" id="menubar">
 
 	<div class="app-navbar-brand">
-		<a class="navbar-brand-logo" href="{{ route('index') }}">
-			<img src="{{ asset('assets/images/logo.svg') }}" alt="logo">
+		<a href="{{ route('index') }}"
+			class="d-flex align-items-center justify-content-center w-100"
+			style="
+            height:80px;
+            border-bottom:1px solid #eef1f6;
+            background:#ffffff;
+       ">
+			<img src="{{ asset('assets/images/auth/Workx_logo.png') }}"
+				alt="Xways Logo"
+				style="
+                max-height:100px;
+                width:auto;
+                object-fit:contain;
+             ">
 		</a>
 	</div>
 
@@ -44,7 +56,6 @@
 		</ul>
 	</nav>
 
-
 	<div class="app-footer">
 		<form method="POST" action="{{ route('logout') }}">
 			@csrf
@@ -56,3 +67,47 @@
 	</div>
 
 </aside>
+
+
+{{-- RIGHT MINI SIDEBAR --}}
+<div class="app-sidebar-end" style="width: 100px;">
+	<ul class="sidebar-list">
+
+		<li>
+			<a href="{{ route('index') }}" class="{{ request()->routeIs('index') ? 'active' : '' }}">
+				<div class="avatar avatar-sm bg-warning shadow-sharp-warning rounded-circle text-white mx-auto mb-2">
+					<i class="fi fi-rr-to-do"></i>
+				</div>
+				<span class="text-dark">Dashboard</span>
+			</a>
+		</li>
+
+		<li>
+			<a href="{{ route('employees.index') }}" class="{{ request()->routeIs('employees.*') ? 'active' : '' }}">
+				<div class="avatar avatar-sm bg-secondary shadow-sharp-secondary rounded-circle text-white mx-auto mb-2">
+					<i class="fi fi-rr-interrogation"></i>
+				</div>
+				<span class="text-dark">Workforce</span>
+			</a>
+		</li>
+
+		<li>
+			<a href="{{ route('designations.index') }}" class="{{ request()->routeIs('designations.*') ? 'active' : '' }}">
+				<div class="avatar avatar-sm bg-info shadow-sharp-info rounded-circle text-white mx-auto mb-2">
+					<i class="fi fi-rr-calendar"></i>
+				</div>
+				<span class="text-dark">Designations</span>
+			</a>
+		</li>
+
+		<li>
+			<a href="{{ route('departments.index') }}" class="{{ request()->routeIs('departments.*') ? 'active' : '' }}">
+				<div class="avatar avatar-sm bg-gray shadow-sharp-gray rounded-circle text-white mx-auto mb-2">
+					<i class="fi fi-rr-settings"></i>
+				</div>
+				<span class="text-dark">Departments</span>
+			</a>
+		</li>
+
+	</ul>
+</div>

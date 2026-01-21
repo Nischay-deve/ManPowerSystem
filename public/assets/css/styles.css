@@ -14072,7 +14072,7 @@ strong {
   display: flex;
   align-items: center;
   gap: 15px;
-  padding: 15px 25px;
+  padding: 15px 0px;
   transition-duration: 0.3s;
   transition-property: width;
   border-bottom: 1px solid var(--bs-border-color);

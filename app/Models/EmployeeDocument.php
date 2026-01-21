@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class EmployeeDocument extends Model
 {
     protected $table = 'employee_documents';
-    public $timestamps = false; // uses uploaded_at
+
+    // Because table doesn't have created_at / updated_at
+    public $timestamps = false;
 
     protected $fillable = [
         'employee_id',
@@ -19,16 +21,16 @@ class EmployeeDocument extends Model
         'uploaded_by',
         'remarks',
         'is_active',
-        'uploaded_at'
+        'uploaded_at',
     ];
 
     protected $casts = [
-        'is_active' => 'integer',
+        'is_active'   => 'boolean',
         'uploaded_at' => 'datetime',
     ];
 
     public function employee()
     {
-        return $this->belongsTo(Employee::class, 'employee_id');
+        return $this->belongsTo(Employee::class);
     }
 }

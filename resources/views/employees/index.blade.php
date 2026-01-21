@@ -98,12 +98,18 @@
 
     $mobile = $employee->mobile ?? '-';
 
-    // ✅ Address from DB: present_address -> permanent_address fallback
+    // ✅ Address (Location)
     $addressText = $employee->present_address ?: $employee->permanent_address;
     $addressText = $addressText ? \Illuminate\Support\Str::limit(strip_tags($addressText), 60) : null;
 
-    // No photo column in employees table -> default avatar
-    $photoUrl = asset('assets/images/avatar/avatar-large1.jpg');
+    // ✅ Profile photo from documents (remarks: "Profile photo") OR fallback
+    $profileDoc = $employee->documents
+    ? $employee->documents->firstWhere('remarks', 'Profile photo')
+    : null;
+
+    $photoUrl = $profileDoc && !empty($profileDoc->file_path)
+    ? asset('storage/' . ltrim($profileDoc->file_path, '/'))
+    : asset('assets/images/avatar/avatar-large1.jpg');
 
     $cardClass = $isActive ? '' : 'bg-danger-subtle border-0';
     @endphp
