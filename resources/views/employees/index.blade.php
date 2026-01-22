@@ -108,7 +108,7 @@
     : null;
 
     $photoUrl = $profileDoc && !empty($profileDoc->file_path)
-    ? asset('storage/' . ltrim($profileDoc->file_path, '/'))
+    ? asset('public/storage/' . ltrim($profileDoc->file_path, '/'))
     : asset('assets/images/avatar/avatar-large1.jpg');
 
     $cardClass = $isActive ? '' : 'bg-danger-subtle border-0';
