@@ -1,26 +1,26 @@
 @extends('layouts.auth')
 
 @push('styles')
-	<!-- begin::GXON Required Stylesheet -->
-	<link rel="stylesheet" href="{{ asset('assets/libs/flaticon/css/all/all.css') }}">
-	<link rel="stylesheet" href="{{ asset('assets/libs/lucide/lucide.css') }}">
-	<link rel="stylesheet" href="{{ asset('assets/libs/fontawesome/css/all.min.css') }}">
-	<link rel="stylesheet" href="{{ asset('assets/libs/simplebar/simplebar.css') }}">
-	<link rel="stylesheet" href="{{ asset('assets/libs/node-waves/waves.css') }}">
-	<link rel="stylesheet" href="{{ asset('assets/libs/bootstrap-select/css/bootstrap-select.min.css') }}">
-	<!-- end::GXON Required Stylesheet -->
+<!-- begin::GXON Required Stylesheet -->
+<link rel="stylesheet" href="{{ asset('assets/libs/flaticon/css/all/all.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/libs/lucide/lucide.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/libs/fontawesome/css/all.min.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/libs/simplebar/simplebar.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/libs/node-waves/waves.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/libs/bootstrap-select/css/bootstrap-select.min.css') }}">
+<!-- end::GXON Required Stylesheet -->
 
-	<!-- begin::GXON CSS Stylesheet -->
-	<link rel="stylesheet" href="{{ asset('assets/css/styles.css') }}">
-	<!-- end::GXON CSS Stylesheet -->
+<!-- begin::GXON CSS Stylesheet -->
+<link rel="stylesheet" href="{{ asset('assets/css/styles.css') }}">
+<!-- end::GXON CSS Stylesheet -->
 @endpush
 
 @push('scripts')
-	<!-- begin::GXON Page Scripts -->
-	<script src="{{ asset('assets/libs/global/global.min.js') }}"></script>
-	<script src="{{ asset('assets/js/appSettings.js') }}"></script>
-	<script src="{{ asset('assets/js/main.js') }}"></script>
-	<!-- end::GXON Page Scripts -->
+<!-- begin::GXON Page Scripts -->
+<script src="{{ asset('assets/libs/global/global.min.js') }}"></script>
+<script src="{{ asset('assets/js/appSettings.js') }}"></script>
+<script src="{{ asset('assets/js/main.js') }}"></script>
+<!-- end::GXON Page Scripts -->
 @endpush
 
 @section('content')
@@ -32,7 +32,7 @@
 					<img src="{{ asset('assets/images/auth/auth.png') }}" alt="" class="img-fluid cover-img ms-5">
 					<div class="auth-content">
 						<h1 class="display-6 fw-bold">Welcome Back!</h1>
-						<p>Our HR Management & Administration ensure your organization runs smoothly, focusing on people, compliance, and efficiency to drive growth and employee satisfaction.</p>
+						<p>With WORKX, manage your workforce smarter. From employee records to day-to-day operations, WORKX gives you clarity, control, and confidence to scale your organization.</p>
 					</div>
 				</div>
 			</div>

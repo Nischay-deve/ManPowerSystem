@@ -64,10 +64,10 @@
 		<h1 class="app-page-title">Dashboard</h1>
 		<span>{{ now()->format('D, M d, Y | h:i A') }}</span>
 	</div>
-	<button type="button" class="btn btn-primary waves-effect waves-light" data-bs-toggle="modal"
+	<!-- <button type="button" class="btn btn-primary waves-effect waves-light" data-bs-toggle="modal"
 		data-bs-target="#addEmployeeModal">
 		<i class="fi fi-rr-plus me-1"></i> Add Employee
-	</button>
+	</button> -->
 </div>
 
 <div class="row">
@@ -206,21 +206,10 @@
 							<td>
 								<span class="badge badge-lg {{ $badgeClass }}">{{ $workStatus }}</span>
 							</td>
-							<td class="text-end">
-								<div class="btn-group float-end">
-									<button class="btn btn-white btn-sm btn-shadow btn-icon waves-effect dropdown-toggle"
-										type="button" data-bs-toggle="dropdown" aria-expanded="false">
-										<i class="fi fi-rr-menu-dots"></i>
-									</button>
-									<ul class="dropdown-menu dropdown-menu-end">
-										<li>
-											<a class="dropdown-item" href="{{ route('employees.show', $emp->id) }}">View</a>
-										</li>
-										<li>
-											<a class="dropdown-item" href="{{ route('employees.edit', $emp->id) }}">Edit</a>
-										</li>
-									</ul>
-								</div>
+							<td>
+								<span class="badge badge-lg {{ $badgeClass }}">
+									<a class="none;" href="{{ route('employees.show', $emp->id) }}">View</a>
+								</span>
 							</td>
 						</tr>
 						@empty

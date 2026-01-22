@@ -123,7 +123,7 @@
                                 <span class="text-success">{{ $d->title }}</span>
                             </td>
 
-                            <td>{{ $d->notes ?: '—' }}</td>
+                            <td>{{ $d->description ?: '—' }}</td>
 
                             <td>{{ $code }}</td>
 

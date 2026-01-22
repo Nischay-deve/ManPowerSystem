@@ -34,8 +34,7 @@
 					<div class="auth-content">
 						<h1 class="display-6 text-white fw-bold">Welcome Back!</h1>
 						<p class="text-white">
-							Our HR Management & Administration ensure your organization runs smoothly, focusing on people,
-							compliance, and efficiency to drive growth and employee satisfaction.
+							With WORKX, manage your workforce smarter. From employee records to day-to-day operations, WORKX gives you clarity, control, and confidence to scale your organization.
 						</p>
 					</div>
 
@@ -53,15 +52,17 @@
 		{{-- RIGHT SIDE FORM --}}
 		<div class="col-lg-6 align-self-center">
 			<div class="p-4 p-sm-5 maxw-450px m-auto">
-				<div class="mb-4 text-center">
+				<div class=" text-center">
 					<a href="{{ route('index') }}" aria-label="GXON logo">
-						<img class="visible-light" src="{{ asset('assets/images/logo-full.svg') }}" alt="GXON logo">
-						<img class="visible-dark" src="{{ asset('assets/images/logo-full-white.svg') }}" alt="GXON logo">
+						<img
+							class="visible-light" style="height: 100px;width:100px;"
+							src="{{ asset('assets/images/auth/Workx_logo.png') }}"
+							alt="GXON logo">
 					</a>
 				</div>
 
 				<div class="text-center mb-5">
-					<h5 class="mb-1">Welcome to GXON</h5>
+					<h5 class="">Welcome to WORKX</h5>
 					<p>Sign in to access your secure admin dashboard.</p>
 				</div>
 

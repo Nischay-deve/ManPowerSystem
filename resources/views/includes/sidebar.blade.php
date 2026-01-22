@@ -59,7 +59,7 @@
 	<div class="app-footer">
 		<form method="POST" action="{{ route('logout') }}">
 			@csrf
-			<button class="btn btn-outline-light w-100">
+			<button class="btn btn-danger w-100">
 				<i class="fi fi-rr-sign-out-alt me-1"></i>
 				Logout
 			</button>
