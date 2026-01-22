@@ -178,7 +178,7 @@ class EmployeeController extends Controller
             });
 
         $photoUrl = $photoDoc
-            ? asset('storage/' . $photoDoc->file_path)
+            ? asset('public/storage/' . $photoDoc->file_path)
             : asset('assets/images/users/default-avatar.png');
 
         $status = ((int)$employee->is_active === 1) ? 'Active' : 'Inactive';

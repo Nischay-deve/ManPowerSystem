@@ -416,7 +416,7 @@ return null;
 
                             <td>
                                 @if($isUploaded)
-                                <a target="_blank" href="{{ asset('storage/'.$doc->file_path) }}"
+                                <a target="_blank" href="{{ asset('public/storage/'.$doc->file_path) }}"
                                     class="btn btn-sm btn-outline-primary me-1">
                                     View
                                 </a>
