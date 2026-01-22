@@ -34,7 +34,7 @@
 					<div class="auth-content">
 						<h1 class="display-6 text-white fw-bold">Welcome Back!</h1>
 						<p class="text-white">
-							With WORKX, manage your workforce smarter. From employee records to day-to-day operations, WORKX gives you clarity, control, and confidence to scale your organization.
+							WORKX is a modern and scalable workforce management platform designed to streamline employee operations. Manage workforce records, attendance, shifts, leave, compliance, announcements, and operational insights through a secure, intuitive, and performance-driven admin dashboard. Ideal for growing organizations and enterprise teams.
 						</p>
 					</div>
 

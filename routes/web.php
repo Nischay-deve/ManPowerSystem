@@ -16,10 +16,9 @@ use Illuminate\Support\Facades\Route;
 // Login page
 
 // Route::get('/', function () {
-//     return 
+//     return redirect()->route('login');
 // });
 Route::get('/', [GxonController::class, 'loginBasic'])
-    ->middleware('guest')
     ->name('login');
 
 // Login submit

@@ -31,7 +31,7 @@
 	<!-- end::GXON Meta Twitter -->
 
 	<!-- begin::GXON Website Page Title -->
-	<title>@yield('title', 'WORKX')</title>
+	<title>@yield('title', 'WORKX | Smart Workforce Management Platform')</title>
 	<!-- end::GXON Website Page Title -->
 
 	<!-- begin::GXON Mobile Specific -->
