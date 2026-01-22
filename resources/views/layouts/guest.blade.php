@@ -42,8 +42,8 @@
 	<!-- end::GXON Mobile Specific -->
 
 	<!-- begin::GXON Favicon Tags -->
-	<link rel="icon" type="image/png" href="{{ asset("assets/images/favicon.png") }}">
-	<link rel="apple-touch-icon" sizes="180x180" href="{{ asset("assets/images/apple-touch-icon.png") }}">
+	<link rel="icon" type="image/png" href="{{ asset("assets/images/auth/Xways_AppIcon_1024.png") }}">
+	<link rel="apple-touch-icon" sizes="180x180" href="{{ asset("assets/images/auth/Xways_AppIcon_1024.png") }}">
 	<!-- end::GXON Favicon Tags -->
 
 	<!-- begin::GXON Google Fonts -->
