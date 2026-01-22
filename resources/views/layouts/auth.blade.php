@@ -15,10 +15,10 @@
 
 		<!-- begin::GXON Meta Social -->
 		<meta property="og:url" content="{{ route('index') }}/demo/">
-		<meta property="og:site_name" content="GXON | HR Management Laravel Admin Dashboard Template">
+		<meta property="og:site_name" content="WORKX | Smart Workforce Management Platform">
 		<meta property="og:type" content="website">
 		<meta property="og:locale" content="en_us">
-		<meta property="og:title" content="GXON | HR Management Laravel Admin Dashboard Template">
+		<meta property="og:title" content="WORKX | Smart Workforce Management Platform">
 		<meta property="og:description" content="GXON is a professional and modern HR Management Laravel Admin Dashboard Template built with Bootstrap. It includes light and dark modes, and is ideal for managing employees, attendance, payroll, recruitment, and more — perfect for HR software and admin panels.">
 		<meta property="og:image" content="{{ route('index') }}/demo/preview.png">
 		<!-- end::GXON Meta Social -->
@@ -32,7 +32,7 @@
 		<!-- end::GXON Meta Twitter -->
 
 		<!-- begin::GXON Website Page Title -->
-		<title>@yield('title', 'GXON | HR Management Laravel Admin Dashboard Template')</title>
+		<title>@yield('title', 'WORKX | Smart Workforce Management Platform')</title>
 		<!-- end::GXON Website Page Title -->
 
 		<!-- begin::GXON Mobile Specific -->
