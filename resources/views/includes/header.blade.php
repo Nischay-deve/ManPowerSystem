@@ -61,7 +61,7 @@ $user = auth()->user();
 						<div class="fw-bold text-dark">{{ $user->name }}</div>
 						<small class="text-body d-block lh-sm">
 							<i class="fi fi-rr-angle-down text-3xs me-1"></i>
-							{{ ucfirst($user->role ?? 'Employee') }}
+							{{ ucfirst($user->username) }}
 						</small>
 					</div>
 
