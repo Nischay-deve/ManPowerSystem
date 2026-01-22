@@ -55,7 +55,7 @@ return $byType || $byRemark;
 
 // ✅ Photo: support both old + new mappings
 $photoDoc = $getDoc(['photo', 'profile_photo'], ['Profile photo']);
-$photoUrlLocal = $photoDoc ? asset('storage/'.$photoDoc->file_path) : asset('assets/images/avatar/avatar-large3.jpg');
+$photoUrlLocal = $photoDoc ? asset('public/storage/'.$photoDoc->file_path) : asset('assets/images/avatar/avatar-large3.jpg');
 
 // If controller already sent $photoUrl, prefer it when available
 $photoUrl = isset($photoUrl) && $photoUrl ? $photoUrl : $photoUrlLocal;
