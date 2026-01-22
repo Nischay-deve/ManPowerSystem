@@ -11,7 +11,8 @@
 			<img src="{{ asset('assets/images/auth/Workx_logo.png') }}"
 				alt="Xways Logo"
 				style="
-                max-height:77px;
+                max-height:150px;
+				margin-bottom:10px;
                 width:auto;
                 object-fit:contain;
              ">

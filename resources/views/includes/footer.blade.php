@@ -8,7 +8,7 @@
 				<p class="mb-0 capitalize">
 					© {{ now()->year }} WORKX.
 					Proudly Powered by
-					<a href="https://www.coretechies.com/">Coretechies</a>
+					<a href="https://www.coretechies.com/" target="_blank">Core Techies</a>
 				</p>
 			</div>
 

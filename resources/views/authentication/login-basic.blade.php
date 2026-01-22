@@ -55,7 +55,7 @@
 				<div class=" text-center">
 					<a href="{{ route('index') }}" aria-label="GXON logo">
 						<img
-							class="visible-light" style="height: 100px;width:100px;"
+							class="visible-light" style="height: 200;width:350px;"
 							src="{{ asset('assets/images/auth/Workx_logo.png') }}"
 							alt="GXON logo">
 					</a>
