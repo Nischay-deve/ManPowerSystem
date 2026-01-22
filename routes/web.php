@@ -15,10 +15,10 @@ use Illuminate\Support\Facades\Route;
 
 // Login page
 
-Route::get('/', function () {
-    return redirect()->route('login');
-});
-Route::get('/login', [GxonController::class, 'loginBasic'])
+// Route::get('/', function () {
+//     return 
+// });
+Route::get('/', [GxonController::class, 'loginBasic'])
     ->middleware('guest')
     ->name('login');
 
