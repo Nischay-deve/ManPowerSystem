@@ -421,7 +421,7 @@ return null;
                                     View
                                 </a>
 
-                                <a href="{{ asset('storage/'.$doc->file_path) }}"
+                                <a href="{{ asset('public/storage/'.$doc->file_path) }}"
                                     class="btn btn-sm btn-primary" download>
                                     Download
                                 </a>
